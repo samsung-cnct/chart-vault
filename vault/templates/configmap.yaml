@@ -1,0 +1,38 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{.Release.Name}}
+data:
+  config.json : |
+{{- if eq .Values.Vault.Backend.Type "inmem"}}
+    backend "inmem" {
+
+    }
+{{- end}}
+{{- if eq .Values.Vault.Backend.Type "consul"}}
+    backend "consul" {
+      address = "{{.Values.Vault.Backend.Address}}"
+  {{- if .Values.Vault.Tls }}
+      scheme = "https"
+  {{- else }}
+      scheme = "http"
+  {{- end }}
+      token = "{{.Values.Vault.Backend.Token}}"
+    }
+{{- end}}
+
+    listener "tcp" {
+{{- if .Values.Vault.Tls }}
+      address = "0.0.0.0:443"
+      tls_key_file = "/etc/vault/tls/vault.key"
+      tls_cert_file = "/etc/vault/tls/vault.crt"
+      tls_client_ca_file = "/etc/vault/tls/ca.crt"
+{{- else}}
+      address = "0.0.0.0:80"
+      tls_skip_verify = true
+      tls_disable = true
+{{- end}}
+    }
+
+#   disable_mlock = true

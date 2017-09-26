@@ -1,14 +1,16 @@
-name: sample-chart
+name: vault-chart
 version: ${CHART_VER}-${CHART_REL}
-description: Sample chart template for registry
+description: Hashicorp Vault server
 keywords:
-- keyword one
-- keyword two
-home: https://github.com/samsung-cnct/template-chart
+- Vault
+- Hashicorp
+- Secret
+home: https://github.com/samsung-cnct/vault-chart
 sources:
-- /source urls go here/
+- https://releases.hashicorp.com/vault/${CHART_VER}/vault_${CHART_VER}_linux_amd64.zip
+- https://www.vaultproject.io
 maintainers:
 - name: Samsung CNCT
   email: samsung.cloudnative@gmail.com
-icon: /optional icon url/
+icon: 
 engine: gotpl

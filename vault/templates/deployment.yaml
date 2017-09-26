@@ -1,0 +1,87 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{.Release.Name}}
+  labels:
+    app: {{.Release.Name}}
+spec:
+  replicas: {{ .Values.Vault.Replicas }}
+  template:
+    metadata:
+      labels:
+        app: {{.Release.Name}}
+    spec:
+      containers:
+      - name: {{.Release.Name}}
+        image: "{{.Values.Vault.Image}}:{{.Values.Vault.ImageTag}}"
+        securityContext:
+          capabilities:
+            add:
+              - IPC_LOCK
+        imagePullPolicy: {{.Values.Vault.ImagePullPolicy}}
+        ports:
+{{- if .Values.Vault.Tls }}
+          - name: https
+            containerPort: 443
+{{- else}}
+          - name: http
+            containerPort: 80
+{{- end }}
+{{- if .Values.Vault.Tls }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/vault/cfg
+        - name: tls
+          mountPath: /etc/vault/tls
+{{- end }}
+        env:
+        - name: "VAULT_DEBUG"
+          value: "true"
+        resources:
+          limits:
+            cpu: {{ .Values.Vault.Cpu }}
+            memory: {{ .Values.Vault.Memory }}
+          requests:
+            cpu: {{ .Values.Vault.Cpu }}
+            memory: {{ .Values.Vault.Memory }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{.Release.Name}}
+          items:
+          - key: config.json
+            path: config.json
+{{- if .Values.Vault.Tls }}
+      - name: tls
+        secret:
+          secretName: {{.Release.Name}}.tls
+{{- end }}
+{{- if .Values.Vault.tolerations }}
+      tolerations:
+      {{- range .Values.Vault.tolerations }}
+      - key: {{ .key | default ("") }}
+        value: {{ .value | default ("")}}
+        operator: {{ .operator | default ("Equal") }}
+        effect: {{ .effect  | default ("")}}
+      {{- end }}
+{{- end }}
+{{- if .Values.Vault.scheduling.affinity }}
+{{- if .Values.Vault.scheduling.affinity.node }}
+{{- if .Values.Vault.scheduling.affinity.node.labels }}
+      affinity:
+        nodeAffinity:
+          {{ .Values.Vault.scheduling.affinity.node.type }}:
+            nodeSelectorTerms:
+            - matchExpressions:
+                {{- range .Values.Vault.scheduling.affinity.node.labels }}
+                - key: {{ .key }}
+                  operator: {{ .operator }}
+                  values:
+                  {{- range .values }}
+                  - {{ . }}
+                  {{- end }}
+                {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
