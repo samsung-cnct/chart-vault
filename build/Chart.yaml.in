@@ -1,3 +1,4 @@
+---
 name: vault-chart
 version: ${CHART_VER}-${CHART_REL}
 description: Hashicorp Vault server
@@ -12,5 +13,5 @@ sources:
 maintainers:
 - name: Samsung CNCT
   email: samsung.cloudnative@gmail.com
-icon: 
+icon: null
 engine: gotpl
