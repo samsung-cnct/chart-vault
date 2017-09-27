@@ -3,7 +3,7 @@
  */
 def registry = "quay.io";
 def registry_user = "samsung_cnct";
-def chart_name = "chart-vault";
+def chart_name = "vault-chart";
 def helm_registry_image = "quay.io/samsung_cnct/helm-registry-agent";
 //def helm_registry_version = "v0.1.7";
 
@@ -19,7 +19,7 @@ podTemplate(label: 'chart-builder', containers: [
 
         stage('Build') {
           //kubesh("CHART_VER=\$(git describe --tags --abbrev=0 | sed 's/^v//') CHART_REL=\$(git rev-list --count v\${CHART_VER}..HEAD) envsubst < build/Chart.yaml.in > ${chart_name}/Chart.yaml")
-          kubesh("build/make_chart_from_tmpl.sh")
+          kubesh("build/make_chart_from_tmpl.sh ${chart_name}")
         }
 
         stage('Test') {

@@ -6,7 +6,7 @@ keywords:
 - Vault
 - Hashicorp
 - Secret
-home: https://github.com/samsung-cnct/vault-chart
+home: https://github.com/samsung-cnct/chart-vault
 sources:
 - https://releases.hashicorp.com/vault/${CHART_VER}/vault_${CHART_VER}_linux_amd64.zip
 - https://www.vaultproject.io
