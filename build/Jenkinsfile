@@ -12,30 +12,30 @@ podTemplate(label: 'chart-builder', containers: [
         containerTemplate(name: 'helm-registry-agent', image: 'quay.io/samsung_cnct/helm-registry-agent:v0.1.5', ttyEnabled: true, command: 'cat', alwaysPullImage: true, resourceRequestMemory: '256Mi', resourceLimitMemory: '256Mi'),
 ]) {
     node('chart-builder') {
-        customContainer('helm-registry-agent'){
-          stage('Checkout') {
-              checkout scm
-          }
+      customContainer('helm-registry-agent'){
+        stage('Checkout') {
+            checkout scm
+        }
 
-          stage('Build') {
-            //kubesh("CHART_VER=\$(git describe --tags --abbrev=0 | sed 's/^v//') CHART_REL=\$(git rev-list --count v\${CHART_VER}..HEAD) envsubst < build/Chart.yaml.in > ${chart_name}/Chart.yaml")
-            kubesh("build/make_chart_from_tmpl.sh")
-          }
+        stage('Build') {
+          //kubesh("CHART_VER=\$(git describe --tags --abbrev=0 | sed 's/^v//') CHART_REL=\$(git rev-list --count v\${CHART_VER}..HEAD) envsubst < build/Chart.yaml.in > ${chart_name}/Chart.yaml")
+          kubesh("build/make_chart_from_tmpl.sh")
+        }
 
-          stage('Test') {
-              kubesh("helm lint ${chart_name}")
-          }
+        stage('Test') {
+            kubesh("helm lint ${chart_name}")
+        }
 
-          if (env.BRANCH_NAME.startsWith('tags/v')) {
-            stage('Deploy')
+        if (env.BRANCH_NAME.startsWith('tags/v')) {
+          stage('Deploy')
+          {
+            withCredentials([usernamePassword(credentialsId: 'quay_credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')])
             {
-              withCredentials([usernamePassword(credentialsId: 'quay_credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')])
-              {
-                kubesh("helm registry login ${registry} -u ${USERNAME} -p ${PASSWORD} && cd ${chart_name} && helm registry push ${registry}/${registry_user}/${chart_name} -c stable")
-              }
+              kubesh("helm registry login ${registry} -u ${USERNAME} -p ${PASSWORD} && cd ${chart_name} && helm registry push ${registry}/${registry_user}/${chart_name} -c stable")
             }
           }
-        }       
+        }
+      }       
     }
 }
 
