@@ -31,7 +31,7 @@ podTemplate(label: 'chart-builder', containers: [
           {
             withCredentials([usernamePassword(credentialsId: 'quay_credentials', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')])
             {
-              kubesh("helm registry login ${registry} -u ${USERNAME} -p ${PASSWORD} && helm registry push ${registry}/${registry_user}/${chart_name} -c stable")
+              kubesh("helm registry login ${registry} -u ${USERNAME} -p ${PASSWORD} && cd ${chart_name} && helm registry push ${registry}/${registry_user}/${chart_name} -c stable")
             }
           }
         }
