@@ -4,7 +4,8 @@
 def registry = "quay.io";
 def registry_user = "samsung_cnct";
 def chart_name = "vault-chart";
-# this is a temporary hack
+
+// this is a temporary hack
 def release_as = "v0.8.3"
 def helm_registry_image = "quay.io/samsung_cnct/helm-registry-agent";
 //def helm_registry_version = "v0.1.7";
