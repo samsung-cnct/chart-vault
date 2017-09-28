@@ -14,6 +14,8 @@ echo "Chart path is: $chart_path"
 CHART_VER=$(git describe --tags --abbrev=0 | sed 's/^v//') 
 CHART_REL=$(git rev-list --count v${CHART_VER}..HEAD)
 
+export CHART_VER CHART_REL
+
 envsubst < build/Chart.yaml.in > ${chart_path}/Chart.yaml
 
 echo "Chart.yaml is: ${chart_path}/Chart.yaml and contains:" 
