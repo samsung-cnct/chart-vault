@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[[ -n "$1" ]] && chart_path=$1 || \
+[ -n "$1" ] && chart_path=$1 || \
   {
     echo >&2 "Chart path was not specified to build script. Usage: $0 directory_path"
     exit 2
