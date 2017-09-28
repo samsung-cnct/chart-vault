@@ -1,0 +1,35 @@
+Vault:
+  Image: "quay.io/samsung_cnct/vault"
+  ImageTag: "0.8.3"
+  ImagePullPolicy: "Always"
+  Component: "vault"
+
+  NodePort: 32443
+
+  Backend:
+    Type: "consul"
+    Address: "consul-consul:8500"
+    Token: "token"
+
+  Replicas: 1
+  Cpu: "512m"
+  Memory: "200Mi"
+
+  #Tls:
+  #  Key: "base64 encoded string"
+  #  Cert: "base64 encoded string"
+  #  Ca: "base64 encoded string"
+
+  tolerations:
+   # - key: taintKey
+   #   value: taintValue
+   #   operator: Equal
+   #   effect: NoSchedule
+  scheduling:
+    affinity:
+      node:
+        type: #requiredDuringSchedulingIgnoredDuringExecution
+        labels:
+        # - key: iamalabelkey
+        #   operator: In
+        #   values: ["value1", "value2"]

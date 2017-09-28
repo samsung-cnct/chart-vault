@@ -1,5 +1,5 @@
 
-Using vault-chart
+Using chart-vault
 ====================
 
 
