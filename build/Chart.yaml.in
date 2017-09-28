@@ -1,5 +1,5 @@
 ---
-name: vault-chart
+name: vault
 version: ${CHART_VER}-${CHART_REL}
 description: Hashicorp Vault server
 keywords:
