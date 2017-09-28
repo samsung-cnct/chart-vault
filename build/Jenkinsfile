@@ -1,6 +1,7 @@
 /*
    This Jenkinsfile builds and tests helm charts, and pushes tagged versions to an app registry.
  */
+
 def registry = "quay.io";
 def registry_user = "samsung_cnct";
 def chart_name = "vault-chart";
