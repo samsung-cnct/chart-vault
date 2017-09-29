@@ -28,10 +28,10 @@ spec:
           - name: http
             containerPort: 80
 {{- end }}
-{{- if .Values.Vault.Tls }}
         volumeMounts:
         - name: config
           mountPath: /etc/vault/cfg
+{{- if .Values.Vault.Tls }}
         - name: tls
           mountPath: /etc/vault/tls
 {{- end }}
