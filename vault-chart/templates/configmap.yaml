@@ -17,6 +17,7 @@ data:
       scheme = "https"
   {{- else }}
       scheme = "http"
+      tls_skip_verify = true
   {{- end }}
       token = "{{.Values.Vault.Backend.Token}}"
     }
@@ -30,7 +31,6 @@ data:
       tls_client_ca_file = "/etc/vault/tls/ca.crt"
 {{- else}}
       address = "0.0.0.0:80"
-      tls_skip_verify = true
       tls_disable = true
 {{- end}}
     }
