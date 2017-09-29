@@ -17,7 +17,6 @@ data:
       scheme = "https"
   {{- else }}
       scheme = "http"
-      tls_skip_verify = true
   {{- end }}
       token = "{{.Values.Vault.Backend.Token}}"
     }
