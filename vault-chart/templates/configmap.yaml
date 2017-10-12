@@ -6,9 +6,7 @@ metadata:
 data:
   config.json : |
 {{- if eq .Values.Vault.Backend.Type "inmem"}}
-    backend "inmem" {
-
-    }
+    backend "inmem" { }
 {{- end}}
 {{- if eq .Values.Vault.Backend.Type "consul"}}
     backend "consul" {
