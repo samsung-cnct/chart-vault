@@ -8,8 +8,9 @@ data:
 {{- if eq .Values.Vault.Backend.Type "inmem"}}
     backend "inmem" { }
 {{- end}}
-{{- if eq .Values.Vault.Backend.Type "consul"}}
-    backend "consul" {
+
+
+   backend {{ .Values.Vault.Backend.Type | quote}} {
       address = "{{.Values.Vault.Backend.Address}}"
   {{- if .Values.Vault.Tls }}
       scheme = "https"
@@ -18,7 +19,6 @@ data:
   {{- end }}
       token = "{{.Values.Vault.Backend.Token}}"
     }
-{{- end}}
 
     listener "tcp" {
 {{- if .Values.Vault.Tls }}
