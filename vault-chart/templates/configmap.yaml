@@ -40,9 +40,9 @@ data:
           cluster_addr = {{ default "" .Values.Vault.Backend.Cluster_address | quote }}
           disable_clustering = {{ default "false" .Values.Vault.Backend.Disable_clustering | quote }}
       {{- if .Values.Vault.Tls }}
-      redirect_addr = "https://vault-vault"
+          redirect_addr = {{ default "https://vault-vault" .Values.Vault.Backend.Redirect_addr }}
       {{- else }}
-          redirect_addr= "http://vault-vault"
+          redirect_addr = {{ default "http://vault-vault" .Values.Vault.Backend.Redirect_addr }}
       {{- end }}
       {{- else }}
           ha_enabled = {{ "false" | quote }}
