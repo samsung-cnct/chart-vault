@@ -26,12 +26,38 @@ data:
 
       backend "etcd"
       {
+      {{- if .Values.Vault.Backend.Discovery_srv }}
+          discovery_srv = {{ .Values.Vault.Backend.Discovery_srv }}
+      {{- end }}
       {{- if .Values.Vault.Tls }}
-          address = "https://{{ .Values.Vault.Backend.Address }}"
+          address = "https://{{ .Values.Vault.Backend.Address }}:{{ .Values.Vault.Backend.Port }}"
       {{- else }}
-          address = "http://{{ .Values.Vault.Backend.Address }}"
+          address = "http://{{ .Values.Vault.Backend.Address }}:{{ .Values.Vault.Backend.Port }}"
       {{- end }}
           etcd_api = {{ .Values.Vault.Backend.Etcd_Api | quote }}
+      {{- if gt .Values.Vault.Replicas 1.0 }}
+          ha_enabled = {{ "true" | quote }}
+          cluster_addr = {{ default "" .Values.Vault.Backend.Cluster_address | quote }}
+          disable_clustering = {{ default "false" .Values.Vault.Backend.Disable_clustering | quote }}
+      {{- if .Values.Vault.Tls }}
+          redirect_addr = {{ default "https://vault-vault" .Values.Vault.Backend.Redirect_addr | quote }}
+      {{- else }}
+          redirect_addr = {{ default "http://vault-vault" .Values.Vault.Backend.Redirect_addr | quote }}
+      {{- end }}
+      {{- else }}
+          ha_enabled = {{ "false" | quote }}
+      {{- end }}
+      {{- if .Values.Vault.Tls }}
+          tls_ca_file = {{ default "/etc/vault/tls/ca.crt" .Values.Vault.Tls.Ca | quote }}
+          tls_cert_file = {{ default "/etc/vault/tls/vault.crt" .Values.Vault.Tls.Cert | quote }}
+          tls_key_file = {{ default "/etc/vault/tls/vault.key" .Values.Vault.Tls.Key | quote }}
+      {{- end }}
+      {{- if .Values.Vault.Backend.Path }}
+          path = {{ .Values.Vault.Backend.Path | quote }}
+      {{- end }}
+          sync = {{ default "false" .Values.Vault.Backend.Sync | quote }}
+          username = {{ default "" .Values.Vault.Backend.Username | quote }}
+          password = {{ default "" .Values.Vault.Backend.Password | quote }}
       }
 
     {{- end }}
