@@ -7,19 +7,59 @@ Vault:
   NodePort: 32443
 
   Backend:
-    Type: "consul"
-    Address: "consul-consul:8500"
+    # Etcd params used from:
+    # https://www.vaultproject.io/docs/configuration/storage/etcd.html
+    # Types recognized: etcd, consul
+    Type: "etcd"
+
+    # do not specify protocol as it is defined by definition
+    # of Tls below.
+    Address: "etcd-vault-etcd"
+    Port: 3379
+
+    # ha_enabled is automatically set to true if replicas is > 1
+
+    # etcd_api: Only needed for etcd backend.
+    Etcd_Api: "v3"
+
+    # Path is used by Etcd and is set to vault/ by default if
+    # not specifed.
+    Path: "vault/"
+
+    # Sync is used by Etcd and is set to "false" by default if
+    # not specified
+    Sync: "false"
+
+    # Etcd l/p for vault communication. Default is ""
+    Username: ""
+    Password: ""
+
+    # required for consul backend. Ignored by etcd.
+    Scheme: "http"
+
+    # Used for consul but ignored for etcd so no need to remove.
     Token: "token"
 
-  Replicas: 1
+    # Etcd redirect_address which is required when ha_enabled is set
+    # The template automatically sets this to "http[s]://vault-vault"
+    # if you comment this out. It uses https if Tls is specified below.
+    # Redirect_addr: ""
+
+    # if replicas is > 1 and you're using etcd, you should consider
+    # settings these:
+    # redirect_addr is set automatically in the template for now.
+    Cluster_address: ""
+    Disable_clustering: "false"
+
+  Replicas: 3
   Cpu: "512m"
   Memory: "200Mi"
 
-  #Tls:
-  #  Key: "base64 encoded string"
-  #  Cert: "base64 encoded string"
-  #  Ca: "base64 encoded string"
-
+#  Tls:
+#    Cert: ""
+#    Key: ""
+#    Ca: ""
+#
   tolerations:
    # - key: taintKey
    #   value: taintValue
@@ -33,3 +73,4 @@ Vault:
         # - key: iamalabelkey
         #   operator: In
         #   values: ["value1", "value2"]
+
