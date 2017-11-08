@@ -2,79 +2,72 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{.Release.Name}}
+  name: {{ template "vault.fullname" . }}
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Release.Name }}-{{ .Values.component }}"
+    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
-
 data:
   vault-start.sh: |-
 {{ .Files.Get "vault-start.sh" | indent 4 }}
 #  lifecycle-prestop.sh: |-
 #{{ .Files.Get "lifecycle-prestop.sh" | indent 4 }}
   config.json: |
-    {{- if eq .Values.Vault.Backend.Type "inmem" }}
+    {{- if eq .Values.vault.backend "inmem" }}
       backend "inmem" { }
     {{- end}}
 
-    {{- if eq .Values.Vault.Backend.Type "consul" }}
-
+    {{- if eq .Values.vault.backend "consul" }}
       backend "consul"
       {
-          address = {{ .Values.Vault.Backend.Address | quote }}
-      {{- if .Values.Vault.Tls }}
+          address = {{ .Values.vault.consulBackend.address | quote }}
+      {{- if .Values.vault.enableTLS }}
           scheme = "https"
       {{- else }}
           scheme = "http"
       {{- end }}
-          token = {{ .Values.Vault.Backend.Token | quote }}
+          token = {{ .Values.vault.consulBackend.token | quote }}
       }
-
-    {{- else if eq .Values.Vault.Backend.Type "etcd" }}
-
+    {{- else if eq .Values.vault.backend "etcd" }}
       backend "etcd"
       {
-      {{- if .Values.Vault.Backend.Discovery_srv }}
-          discovery_srv = {{ .Values.Vault.Backend.Discovery_srv }}
+      {{- if .Values.vault.etcdBackend.discoverySRV }}
+          discovery_srv = {{ .Values.Vault.etcdBackend.discoverySRV }}
       {{- end }}
-      {{- if .Values.Vault.Tls }}
-          address = "https://{{ .Values.Vault.Backend.Address }}:{{ .Values.Vault.Backend.Port }}"
+      {{- if .Values.vault.enableTLS }}
+          address = "https://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
+          tls_ca_file = {{ default "/etc/vault/tls/ca.crt" .Values.vault.etcdBackend.clientCA | quote }}
+          tls_cert_file = {{ default "/etc/vault/tls/vault.crt" .Values.vault.etcdBackend.clientCert | quote }}
+          tls_key_file = {{ default "/etc/vault/tls/vault.key" .Values.vault.etcdBackend.clientKey | quote }}
       {{- else }}
-          address = "http://{{ .Values.Vault.Backend.Address }}:{{ .Values.Vault.Backend.Port }}"
+          address = "http://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
       {{- end }}
-          etcd_api = {{ .Values.Vault.Backend.Etcd_Api | quote }}
-      {{- if gt .Values.Vault.Replicas 1.0 }}
+          etcd_api = {{ .Values.vault.etcdBackend.etcdApi | quote }}
+      {{- if gt .Values.vault.replicas 1.0 }}
           ha_enabled = {{ "true" | quote }}
-          cluster_addr = {{ default "" .Values.Vault.Backend.Cluster_address | quote }}
-          disable_clustering = {{ default "false" .Values.Vault.Backend.Disable_clustering | quote }}
-      {{- if .Values.Vault.Tls }}
-          redirect_addr = {{ default "https://vault-vault" .Values.Vault.Backend.Redirect_addr | quote }}
+          cluster_addr = {{ default "" .Values.vault.etcdBackend.clusterAddress | quote }}
+          disable_clustering = {{ default "false" .Values.vault.etcdBackend.disableClustering | quote }}
+      {{- if .Values.vault.enableTLS }}
+          redirect_addr = {{ default "https://vault-vault" .Values.vault.etcdBackend.redirectAddr | quote }}
       {{- else }}
-          redirect_addr = {{ default "http://vault-vault" .Values.Vault.Backend.Redirect_addr | quote }}
+          redirect_addr = {{ default "http://vault-vault" .Values.vault.etcdBackend.redirectAddr | quote }}
       {{- end }}
       {{- else }}
           ha_enabled = {{ "false" | quote }}
       {{- end }}
-      {{- if .Values.Vault.Tls }}
-          tls_ca_file = {{ default "/etc/vault/tls/ca.crt" .Values.Vault.Tls.Ca | quote }}
-          tls_cert_file = {{ default "/etc/vault/tls/vault.crt" .Values.Vault.Tls.Cert | quote }}
-          tls_key_file = {{ default "/etc/vault/tls/vault.key" .Values.Vault.Tls.Key | quote }}
+      {{- if .Values.vault.etcdBackend.path }}
+          path = {{ .Values.vault.etcdBackend.path | quote }}
       {{- end }}
-      {{- if .Values.Vault.Backend.Path }}
-          path = {{ .Values.Vault.Backend.Path | quote }}
-      {{- end }}
-          sync = {{ default "false" .Values.Vault.Backend.Sync | quote }}
-          username = {{ default "" .Values.Vault.Backend.Username | quote }}
-          password = {{ default "" .Values.Vault.Backend.Password | quote }}
+          sync = {{ default "false" .Values.vault.etcdBackend.sync | quote }}
+          username = {{ default "" .Values.vault.etcdBackend.username | quote }}
+          password = {{ default "" .Values.vault.etcdBackend.password | quote }}
       }
-
     {{- end }}
 
       listener "tcp" {
-    {{- if .Values.Vault.Tls }}
+    {{- if .Values.vault.enableTLS }}
         address = "0.0.0.0:443"
         tls_key_file = "/etc/vault/tls/vault.key"
         tls_cert_file = "/etc/vault/tls/vault.crt"

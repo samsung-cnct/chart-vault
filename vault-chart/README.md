@@ -44,6 +44,60 @@ helmConfigs:
 
 Get [K2](https://github.com/samsung-cnct/k2) to help you deploy a Kubernetes cluster.
 
+
+## Configuration
+
+| Parameter                    | Description                                                       | Default                    |
+| -----------------------------| ----------------------------------------------------------------- | -------------------------- |
+| vault.image                  | Vault docker image to use.                                        | "quay.io/samsung_cnct/vault" |    
+| vault.imageTag               | Version of vault image.                                           | "0.8.3"                      |
+| vault.imagePullPolicy        | Pull policy for the docker image.                                 | "Always"                     |
+| vault.component              | Name to use for the component.                                    | "vault"                      |
+| vault.nodePort               |                                                                   | 32443                        |
+| vault.replicas               | Number of vault instances to use.                                 | 1                            |
+| vault.cpu                    |                                                                   | "512m"                       |
+| vault.memory                 |                                                                   | "200mi"                      |
+
+### etcd Backend
+Etcd params used from [here](https://www.vaultproject.io/docs/configuration/storage/etcd.html)
+
+A few facts:
+- do not specify protocol as it is defined by definition of Tls.
+- ha_enabled is automatically set to true if replicas is > 1 and the backend supports it.
+
+
+| Parameter                        | Description                                                                                         | Default              |
+| ---------------------------------| ----------------------------------------------------------------------------------------------------| -------------------- |
+| etcdBackend.type                 | Type of backend supporting vault                                                                    | "etcd"               |    
+| etcdBackend.address              | IP address of the backened                                                                          | "etcd-vault-etcd"    |    
+| etcdBackend.port                 | etcd client port to use                                                                             | 3379                 |    
+| etcdBackend.etcdApi              | API version of etcd. Highly recommend using v3                                                      | "v3"                 |    
+| etcdBackend.path                 | Path to store vault data.                                                                           | "vault/"             |    
+| etcdBackend.sync                 | Specifies whether to sync the list of available Etcd services on startup                            | "true"               |    
+| etcdBackend.username             | Specifies the username to use when authenticating with the etcd server                              | ""                   |    
+| etcdBackend.password             | Specifies the password to use when authenticating with the etcd server                              | ""                   |    
+| etcdBackend.scheme               | Required for consul backend, ignored by etcd.                                                       | "http"               |    
+| etcdBackend.token                | Used for consul but ignored by etcd so no need to remove.                                           | "token"              |    
+| etcdBackend.redirectAddr         | The address (full URL) to advertise to other Vault servers in the cluster for client redirection    | ""                   |    
+| etcdBackend.clusterAddress       | The address to advertise to other Vault servers in the cluster for request forwarding               | ""                   |    
+| etcdBackend.disableClustering    | Whether clustering features such as request forwarding are enabled.                                 | "false"              |    
+| etcdBackend.clientCA             | Specifies the path to the CA certificate used for Etcd communication.                               |                      |    
+| etcdBackend.clientCert           | Specifies the path to the cert certificate used for Etcd communication.                             |                      |    
+| etcdBackend.clientKey            | Specifies the path to the key certificate used for Etcd communication.                              |                      |    
+
+
+
+### Consul Backend
+
+| Parameter             | Description                                                          | Default                 |
+| ----------------------| -------------------------------------------------------------------- | ----------------------- |
+| consulBackend.type    | Type of backend supporting vault.                                    | "consul"                |    
+| consulBackend.address | IP address of the backend.                                           |                         |    
+| consulBackend.token   | Token to use with backend.                                           | "token"                 |    
+
+ 
+
+
 ## Assets
 Kubernetes Asset in the chart.
 
