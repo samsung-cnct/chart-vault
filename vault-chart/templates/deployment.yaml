@@ -2,26 +2,30 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{.Release.Name}}
+  name: {{ template "vault.fullname" . }}
   labels:
-    app: {{.Release.Name}}
+    app: {{ template "vault.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
 spec:
-  replicas: {{ .Values.Vault.Replicas }}
+  replicas: {{ .Values.vault.replicas }}
   template:
     metadata:
       labels:
-        app: {{.Release.Name}}
+        app: {{ template "vault.fullname" . }}
     spec:
       containers:
-      - name: {{.Release.Name}}
-        image: "{{.Values.Vault.Image}}:{{.Values.Vault.ImageTag}}"
+      - name: {{ template "vault.fullname" . }}
+        image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
         securityContext:
           capabilities:
             add:
               - IPC_LOCK
-        imagePullPolicy: {{.Values.Vault.ImagePullPolicy}}
+        imagePullPolicy: {{.Values.vault.imagePullPolicy}}
         ports:
-{{- if .Values.Vault.Tls }}
+{{- if .Values.vault.enableTLS }}
           - name: https
             containerPort: 443
 {{- else}}
@@ -31,50 +35,50 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /etc/vault/cfg
-{{- if .Values.Vault.Tls }}
+{{- if .Values.vault.enableTLS }}
         - name: tls
           mountPath: /etc/vault/tls
 {{- end }}
         env:
-        - name: "VAULT_DEBUG"
-          value: "true"
+        - name: VAULT_DEBUG
+          value: "{{.Values.vault.enableDebug}}"
         resources:
           limits:
-            cpu: {{ .Values.Vault.Cpu }}
-            memory: {{ .Values.Vault.Memory }}
+            cpu: {{ .Values.vault.cpu }}
+            memory: {{ .Values.vault.memory }}
           requests:
-            cpu: {{ .Values.Vault.Cpu }}
-            memory: {{ .Values.Vault.Memory }}
+            cpu: {{ .Values.vault.cpu }}
+            memory: {{ .Values.vault.memory }}
       volumes:
       - name: config
         configMap:
-          name: {{.Release.Name}}
+          name: {{ template "vault.fullname" . }}
           items:
           - key: config.json
             path: config.json
-{{- if .Values.Vault.Tls }}
+{{- if .Values.vault.enableTLS }}
       - name: tls
         secret:
-          secretName: {{.Release.Name}}.tls
+          secretName: {{ template "vault.fullname" . }}.tls
 {{- end }}
-{{- if .Values.Vault.tolerations }}
+{{- if .Values.vault.tolerations }}
       tolerations:
-      {{- range .Values.Vault.tolerations }}
+      {{- range .Values.vault.tolerations }}
       - key: {{ .key | default ("") }}
         value: {{ .value | default ("")}}
         operator: {{ .operator | default ("Equal") }}
         effect: {{ .effect  | default ("")}}
       {{- end }}
 {{- end }}
-{{- if .Values.Vault.scheduling.affinity }}
-{{- if .Values.Vault.scheduling.affinity.node }}
-{{- if .Values.Vault.scheduling.affinity.node.labels }}
+{{- if .Values.vault.scheduling.affinity }}
+{{- if .Values.vault.scheduling.affinity.node }}
+{{- if .Values.vault.scheduling.affinity.node.labels }}
       affinity:
         nodeAffinity:
-          {{ .Values.Vault.scheduling.affinity.node.type }}:
+          {{ .Values.vault.scheduling.affinity.node.type }}:
             nodeSelectorTerms:
             - matchExpressions:
-                {{- range .Values.Vault.scheduling.affinity.node.labels }}
+                {{- range .Values.vault.scheduling.affinity.node.labels }}
                 - key: {{ .key }}
                   operator: {{ .operator }}
                   values:

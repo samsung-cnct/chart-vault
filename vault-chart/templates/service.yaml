@@ -2,23 +2,29 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{.Release.Name}}
+  name: {{ template "vault.fullname" . }}
+  labels:
+    app: {{ template "vault.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
 spec:
-{{- if .Values.Vault.NodePort }}
+{{- if .Values.vault.nodePort }}
   type: NodePort
 {{- end }}
   ports:
-    - name: {{.Release.Name}}
+    - name: {{ template "vault.fullname" . }}
       protocol: TCP
-{{- if .Values.Vault.Tls }}
+{{- if .Values.vault.enableTLS }}
       port: 443
       targetPort: 443
 {{- else }}
       port: 80
       targetPort: 80
 {{- end }}
-{{- if .Values.Vault.NodePort }}
-      nodePort: {{ .Values.Vault.NodePort }}
+{{- if .Values.vault.nodePort }}
+      nodePort: {{ .Values.vault.nodePort }}
 {{- end }}
   selector:
     app: {{.Release.Name}}
