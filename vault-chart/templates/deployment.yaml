@@ -31,6 +31,14 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /etc/vault/cfg
+        - name: config
+          mountPath: /vault-bin/vault-start.sh
+          subPath: vault-start.sh
+          readOnly: false
+#       - name: config
+#         mountPath: /vault-bin/lifecycle-prestop.sh
+#         subPath: lifecycle-prestop.sh
+#         readOnly: false
 {{- if .Values.Vault.Tls }}
         - name: tls
           mountPath: /etc/vault/tls
@@ -45,6 +53,9 @@ spec:
           requests:
             cpu: {{ .Values.Vault.Cpu }}
             memory: {{ .Values.Vault.Memory }}
+      command:
+        - "/bin/sh"
+        - "/vault-bin/vault-init.sh"
       volumes:
       - name: config
         configMap:

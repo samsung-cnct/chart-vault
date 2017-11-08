@@ -15,7 +15,7 @@ Vault:
     # do not specify protocol as it is defined by definition
     # of Tls below.
     Address: "etcd-vault-etcd"
-    Port: 3379
+    Port: 2379
 
     # ha_enabled is automatically set to true if replicas is > 1
 
