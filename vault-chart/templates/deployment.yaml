@@ -22,15 +22,15 @@ spec:
         securityContext:
           capabilities:
             add:
-              - IPC_LOCK
-        imagePullPolicy: {{.Values.vault.imagePullPolicy}}
+            - IPC_LOCK
+        imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
         ports:
 {{- if .Values.vault.enableTLS }}
-          - name: https
-            containerPort: 443
-{{- else}}
-          - name: http
-            containerPort: 80
+        - name: https
+          containerPort: 443
+{{- else }}
+        - name: http
+          containerPort: 80
 {{- end }}
         volumeMounts:
         - name: config
@@ -39,10 +39,6 @@ spec:
           mountPath: /vault-bin/vault-start.sh
           subPath: vault-start.sh
           readOnly: false
-#       - name: config
-#         mountPath: /vault-bin/lifecycle-prestop.sh
-#         subPath: lifecycle-prestop.sh
-#         readOnly: false
 {{- if .Values.vault.enableTLS }}
         - name: tls
           mountPath: /etc/vault/tls
@@ -50,16 +46,30 @@ spec:
         env:
         - name: VAULT_DEBUG
           value: "{{.Values.vault.enableDebug}}"
+        - name: RUN_TESTS
+          value: "false"
+        - name: VAULT_INIT_VARS
+          value: "{
+                    [
+                      {{- range $i, $k := .Values.vault.init.key_masters }}
+                      {{- if gt $i 0 }},{{ end }} 
+                      {
+                        "email": {{ $k.email | quote }}, 
+                        "pubkey": {{ $k.pubkey | quote }} 
+                      }
+                      {{- end }}
+                    ]
+                  }"
         resources:
           limits:
             cpu: {{ .Values.vault.cpu }}
             memory: {{ .Values.vault.memory }}
           requests:
-            cpu: {{ .Values.Vault.Cpu }}
-            memory: {{ .Values.Vault.Memory }}
-      command:
-        - "/bin/sh"
-        - "/vault-bin/vault-init.sh"
+            cpu: {{ .Values.vault.cpu }}
+            memory: {{ .Values.vault.memory }}
+        command:
+          - "/bin/sh"
+          - "/vault-bin/vault-init.sh"
       volumes:
       - name: config
         configMap:
