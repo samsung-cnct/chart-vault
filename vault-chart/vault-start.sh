@@ -31,7 +31,11 @@ prepare_pubkey()
   key_holder=$1
   ctr=$2
 
-# XXX sanity check
+  if [[ -z $key_holder || -z $ctr ]]
+  then
+    echo >&2 'prepare_pubkey() is missing one, some, or all of $key_holder, and/or $ctr'
+    return 32
+  fi
 
   # grab master_key_holder's base64 encoded public key 
   # and store it in a file preparing it for import
@@ -78,28 +82,35 @@ prepare_pubkey()
 vault_status()
 {
   jo_me=""
-  status=$(vault status | \
+  status=$(vault status 2>/dev/null | \
            grep -E '[a-z]' | \
            sed -e 's#: #:#g' -e 's/^.*\t//g' | \
            tr ' ' '_')
 
-  for l in $status
-  do
-    k=$(echo $l | cut -d : -f 1 | awk '{print (tolower($0))}')
-    v=$(echo $l | cut -d : -f 2 | awk '{print (tolower($0))}')
-    jo_me="$jo_me $k=$v "
-  done
-
-  if [[ -n "$jo_me" ]]
+  if [[ $? == 0 ]]
   then
-    V_STATUS=$(jo $jo_me)
+    for l in $status
+    do
+      k=$(echo $l | cut -d : -f 1 | awk '{print (tolower($0))}')
+      v=$(echo $l | cut -d : -f 2 | awk '{print (tolower($0))}')
+      jo_me="$jo_me $k=$v "
+    done
 
-    KEY_THRESHOLD=$(echo "$V_STATUS" | jq -rM '.key_threshold')
-    TOTAL_KEYS=$(echo "$V_STATUS"    | jq -rM '.key_shares')
-    SEALED=$(echo "$V_STATUS"        | jq -rM '.sealed')
-   #echo $V_STATUS
+    if [[ -n "$jo_me" ]]
+    then
+      V_STATUS=$(jo $jo_me)
+
+      KEY_THRESHOLD=$(echo "$V_STATUS" | jq -rM '.key_threshold')
+      TOTAL_KEYS=$(echo "$V_STATUS"    | jq -rM '.key_shares')
+      SEALED=$(echo "$V_STATUS"        | jq -rM '.sealed')
+     #echo $V_STATUS
+    else
+      echo "{}"
+    fi
+
+    return 0
   else
-    echo "{}"
+    return 1
   fi
 }
 
@@ -110,7 +121,11 @@ email_key()
   enc=$3
   ctr=$4
 
-# XXX sanity check
+  if [[ -z $key || -z $rcpt || -z $enc || -z $ctr ]]
+  then
+    echo >&2 'email_key() is missing one, some, or all of $key, $rcpt, $enc, and/or $ctr'
+    return 16
+  fi
 
   # send an email to key holder with an ascii armored encrypted
   # copy of the their part of the master key.
@@ -140,14 +155,16 @@ email_key()
   fi
 }
 
+# Vault status can only work if the server has been started
+# and init'ed. If status works then there is noneed to proceed.
+if vault_status
+then
+  echo >&2 "INFO: Vault is already running and initialized."
+  exit 0
+fi
+
 start_vault 
 
-## This will need to be fixed. Since Vault runs in HA mode
-## the first vault will init the quorum. The remaining nodes
-## will fail to init because the quorum is already initialized
-## so we don't want to stop on a false positive. Furthermore,
-## vault exits with error code 2 on normal exit. *shrug* will
-## need to dig into that further.
 if [[ $V_ECODE == 0 ]]
 then
   encrypt_msg=$(echo "$VAULT_INIT_VARS" | jq -rM '.encrypt_key_to_rcpt')
