@@ -34,10 +34,12 @@ spec:
 {{- end }}
         volumeMounts:
         - name: config
-          mountPath: /etc/vault/cfg
-        - name: config
           mountPath: /vault-bin/vault-start.sh
           subPath: vault-start.sh
+          readOnly: false
+        - name: config
+          mountPath: /etc/vault/cfg/config.json
+          subPath: config.json
           readOnly: false
 {{- if .Values.vault.enableTLS }}
         - name: tls
@@ -75,9 +77,6 @@ spec:
       - name: config
         configMap:
           name: {{ template "vault.fullname" . }}
-          items:
-          - key: config.json
-            path: config.json
 {{- if .Values.vault.enableTLS }}
       - name: tls
         secret:
