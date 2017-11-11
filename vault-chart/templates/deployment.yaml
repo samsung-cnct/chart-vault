@@ -50,6 +50,7 @@ spec:
           value: "false"
         - name: VAULT_INIT_VARS
           value: "{
+                    "encrypt_key_to_rcpt": {{ .Values.vault.init.encrypt_key_to_rcpt }},
                     [
                       {{- range $i, $k := .Values.vault.init.key_masters }}
                       {{- if gt $i 0 }},{{ end }} 
