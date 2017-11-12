@@ -72,7 +72,7 @@ spec:
             memory: {{ .Values.vault.memory }}
         command:
           - "/bin/sh"
-          - "/vault-bin/vault-init.sh"
+          - "/vault-bin/vault-start.sh"
       volumes:
       - name: config
         configMap:

@@ -1,27 +1,10 @@
-#!/bin/busybox sh
-#set -x
+#!/bin/sh
 
-# XXX this whole script needs to be parameterized from template
-cat /etc/vault/cfg/config.json
+DEBUG=${1:-0}
+PREREQS="jo jq vault base64 gpg"
 
-start_vault()
-{
-#  printenv
-
-#  vault_listener_proto={{- if .Values.vault.enableTLS }}"https"{{- else }}"http"{{- end }}
-#  vault_listener_addr={{ .Values.vault.listenerAddress }}
-#  vault_listener_port={{ .Values.vault.listenerPort }}
-
-  export VAULT_ADDR=$vault_listener_proto://$vault_listener_addr:$vault_listener_port
-  export VAULT_ADDR=http://127.0.0.1:80
-
-  # some day these paths should be parameterized.
-  sudo /usr/local/bin/vault server -config /etc/vault/cfg/config.json &
-  sleep 2
-
-  V_INIT_DATA=$(vault init)
-  V_ECODE=$?
-}
+V_INIT_DATA=$(vault init)
+V_ECODE=$?
 
 prepare_pubkey()
 {
@@ -82,6 +65,7 @@ prepare_pubkey()
 vault_status()
 {
   jo_me=""
+
   status=$(vault status 2>/dev/null | \
            grep -E '[a-z]' | \
            sed -e 's#: #:#g' -e 's/^.*\t//g' | \
@@ -155,15 +139,41 @@ email_key()
   fi
 }
 
+check_prereqs()
+{
+  for pr in $PREREQS
+  do
+    if ! which $pr > /dev/null 2>&1
+    then
+      echo >&2 "Prereq '$pr' not found in container. Cannot continue."
+      exit 100
+    fi
+  done
+}
+
+if [[ ! $DEBUG ]]
+then
+  vault_listener_proto={{- if .Values.vault.enableTLS }}"https"{{- else }}"http"{{- end }}
+  vault_listener_addr={{ .Values.vault.listenerAddress }}
+  vault_listener_port={{ .Values.vault.listenerPort }}
+
+  export VAULT_ADDR=$vault_listener_proto://$vault_listener_addr:$vault_listener_port
+else
+  export VAULT_INIT_VARS=$(yaml2json ~/projects/cyklops-config-vault/vault-svc-values.yaml | jq '.vault.init')
+  export VAULT_ADDR=http://127.0.0.1:80
+fi
+
+echo "VAULT_ADDR is: $VAULT_ADDR"
+
 # Vault status can only work if the server has been started
-# and init'ed. If status works then there is noneed to proceed.
-if vault_status
+# and init'ed. If status works then there is no need to proceed.
+if vault init -check
 then
   echo >&2 "INFO: Vault is already running and initialized."
   exit 0
 fi
 
-start_vault 
+check_prereqs
 
 if [[ $V_ECODE == 0 ]]
 then
@@ -243,7 +253,7 @@ then
       fi
     else
       echo "INFO: Vault is unsealed."
-      exit 0
+      break
     fi
 
     echo
@@ -251,5 +261,3 @@ then
 else
   echo >&2 "ERROR: VAULT START FAILED: error code was: $V_ECODE"
 fi
-
-fg 2>/dev/null
