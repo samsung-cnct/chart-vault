@@ -35,6 +35,25 @@ vault:
     clientCert:
     clientKey:
 
+# At runtime, vault gets properly init'ed and
+# each key, up to "Key Threshold" keys, is pgp
+# encrypted and sent to it's recipient. Pubkeys
+# need to be base64 encoded.
+  init:
+    encrypt_key_to_rcpt: false
+    key_masters:
+      - email: ""
+        pubkey: ""
+      - email: ""
+        pubkey: ""
+      - email: ""
+        pubkey: ""
+    auth_backends:
+      - github
+      - kubernetes
+      - aws
+      - approle
+
 # TLS info
   tls:
     cert: ""
