@@ -51,7 +51,12 @@ vault:
         pubkey: ""
       - email: ""
         pubkey: ""
-      
+    auth_backends:
+      - github
+      - kubernetes
+      - aws
+      - approle
+
 # TLS info
   tls:
     cert: ""
