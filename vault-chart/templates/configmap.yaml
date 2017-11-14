@@ -10,6 +10,8 @@ metadata:
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 data:
+  vault-start.sh: |-
+{{ .Files.Get "vault-start.sh" | indent 4 }}
   config.json: |
     {{- if eq .Values.vault.backend "inmem" }}
       backend "inmem" { }

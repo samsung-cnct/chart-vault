@@ -22,19 +22,25 @@ spec:
         securityContext:
           capabilities:
             add:
-              - IPC_LOCK
-        imagePullPolicy: {{.Values.vault.imagePullPolicy}}
+            - IPC_LOCK
+        imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
         ports:
 {{- if .Values.vault.enableTLS }}
-          - name: https
-            containerPort: 443
-{{- else}}
-          - name: http
-            containerPort: 80
+        - name: https
+          containerPort: 443
+{{- else }}
+        - name: http
+          containerPort: 80
 {{- end }}
         volumeMounts:
         - name: config
-          mountPath: /etc/vault/cfg
+          mountPath: /vault-bin/vault-start.sh
+          subPath: vault-start.sh
+          readOnly: false
+        - name: config
+          mountPath: /etc/vault/cfg/config.json
+          subPath: config.json
+          readOnly: false
 {{- if .Values.vault.enableTLS }}
         - name: tls
           mountPath: /etc/vault/tls
@@ -42,6 +48,21 @@ spec:
         env:
         - name: VAULT_DEBUG
           value: "{{.Values.vault.enableDebug}}"
+        - name: RUN_TESTS
+          value: "false"
+        - name: VAULT_INIT_VARS
+          value: '{
+                    "encrypt_key_to_rcpt": {{ .Values.vault.init.encrypt_key_to_rcpt }},
+                    [
+                      {{- range $i, $k := .Values.vault.init.key_masters }}
+                      {{- if gt $i 0 }},{{ end }} 
+                      {
+                        "email": {{ $k.email | quote }}, 
+                        "pubkey": {{ $k.pubkey | quote }} 
+                      }
+                      {{- end }}
+                    ]
+                  }'
         resources:
           limits:
             cpu: {{ .Values.vault.cpu }}
@@ -49,13 +70,13 @@ spec:
           requests:
             cpu: {{ .Values.vault.cpu }}
             memory: {{ .Values.vault.memory }}
+        command:
+          - "/bin/sh"
+          - "/vault-bin/vault-start.sh"
       volumes:
       - name: config
         configMap:
           name: {{ template "vault.fullname" . }}
-          items:
-          - key: config.json
-            path: config.json
 {{- if .Values.vault.enableTLS }}
       - name: tls
         secret:
