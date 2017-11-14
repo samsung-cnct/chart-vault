@@ -1,16 +1,19 @@
+---
 vault:
   image: "quay.io/samsung_cnct/vault"
   imageTag: "0.8.3"
   imagePullPolicy: "Always"
   component: "vault"
   nodePort: 32443
+  listenerAddress: "127.0.0.1"
+  listenerPort: 8200
+# Valid choices are [etcd, consul, inmem]
   backend: etcd
   enableTLS: false
   enableDebug: true
   replicas: 3
   cpu: "512m"
   memory: "200Mi"
-
 
 # Consul backend example
   consulBackend:
@@ -21,7 +24,7 @@ vault:
   etcdBackend:
     discoverySRV:
     address: "etcd-vault-etcd"
-    port: 3379
+    port: 2379
     etcdApi: "v3"
     path: "vault/"
     sync: "false"
@@ -59,7 +62,6 @@ vault:
     cert: ""
     key: ""
     ca: ""
-
 
   tolerations:
    # - key: taintKey
