@@ -47,7 +47,9 @@ prepare_pubkey()
         return 1
       fi
     else
-      echo >&2 "ERROR: ASCII armored public key does not exist. Cannot continue with this key."
+      echo >&2 """
+      ERROR: ASCII armored public key does not exist.
+      Cannot continue with this key."""
       return 2
     fi
   else
@@ -107,7 +109,7 @@ email_key()
 
   if [[ -z $key || -z $rcpt || -z $enc || -z $ctr ]]
   then
-    echo >&2 'email_key() is missing one, some, or all of $key, $rcpt, $enc, and/or $ctr'
+    echo >&2 'email_key() missing one, some, or all of $key, $rcpt, $enc, and/or $ctr'
     return 16
   fi
 
@@ -203,7 +205,8 @@ then
     if [[ $SEALED == true ]]
     then
       # for each key, determine the corresponding key holder from values.yaml
-      master_key_holder="$(echo $VAULT_INIT_VARS | jq -rM --arg i $ctr '.key_masters[($i | tonumber)].email')"
+      master_key_holder="$(echo $VAULT_INIT_VARS | \
+                           jq -rM --arg i $ctr '.key_masters[($i | tonumber)].email')"
 
       # master_key_holder is not "null" or empty
       if [[ -n "$master_key_holder" && $master_key_holder != "null" ]]
@@ -220,7 +223,6 @@ then
               fi
             else
               echo >&2 "ERROR: Unseal command for key at index $ctr failed to unseal vault."
-              # XXX do some more checking here.
             fi
           else
             exit $?
@@ -230,29 +232,28 @@ then
           then
             if ! email_key $key $master_key_holder 0 $ctr
             then
-              echo >&2 "Quitting..."
+              echo >&2 'Quitting...'
+              break
             fi
           else
             echo >&2 "ERROR: Unseal command for key at index $ctr failed to unseal vault."
-            # XXX do some more checking here.
           fi
         fi
 
-        ## AND DO WHAT WITH THE ROOT TOKEN?
-
+        ## XXX AND DO WHAT WITH THE ROOT TOKEN?
         let ctr++
       else
         if [[ $ctr -gt 0 ]]
         then
-          echo >&2 "INFO: Exhausted all key masters for available keys. Moving on."
+          echo >&2 'INFO: Exhausted all key masters for available keys. Moving on.'
           break
         else
-          echo >&2 "INFO: No master key holders were found in \$VAULT_INIT_VARS"
+          echo >&2 'INFO: No master key holders were found in $VAULT_INIT_VARS'
           exit 2
         fi
       fi
     else
-      echo "INFO: Vault is unsealed."
+      echo 'INFO: Vault is unsealed.'
       break
     fi
 
