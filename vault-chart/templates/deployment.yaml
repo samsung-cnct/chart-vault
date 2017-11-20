@@ -16,6 +16,8 @@ spec:
       labels:
         app: {{ template "vault.fullname" . }}
     spec:
+      nodeSelector:
+        nodepool: clusterNodes
       containers:
       - name: {{ template "vault.fullname" . }}
         image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
@@ -47,12 +49,19 @@ spec:
 {{- end }}
         env:
         - name: VAULT_DEBUG
-          value: "{{.Values.vault.enableDebug}}"
+          value: {{ default "false" .Values.vault.enableDebug | quote }}
         - name: RUN_TESTS
           value: "false"
+        - name: VAULT_LISTENER_PROTO
+          value: "{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}"
+        - name: VAULT_LISTENER_ADDR
+          value: "{{ .Values.vault.listenerAddress }}"
+        - name: VAULT_LISTENER_PORT
+          value: "{{ .Values.vault.listenerPort }}"
         - name: VAULT_INIT_VARS
           value: '{
                     "encrypt_key_to_rcpt": {{ .Values.vault.init.encrypt_key_to_rcpt }},
+                    "recipients": 
                     [
                       {{- range $i, $k := .Values.vault.init.key_masters }}
                       {{- if gt $i 0 }},{{ end }} 
@@ -61,7 +70,13 @@ spec:
                         "pubkey": {{ $k.pubkey | quote }} 
                       }
                       {{- end }}
-                    ]
+                    ],
+                    "auth_backends": [
+                      {{- range $i, $e := .Values.vault.init.auth_backends }}
+                      {{- if gt $i 0 }},{{ end }} 
+                      {{ $e | quote }}
+                      {{- end }}
+                      ]
                   }'
         resources:
           limits:
@@ -71,8 +86,8 @@ spec:
             cpu: {{ .Values.vault.cpu }}
             memory: {{ .Values.vault.memory }}
         command:
-          - "/bin/sh"
-          - "/vault-bin/vault-start.sh"
+         - "/bin/sh"
+         - "/vault-bin/vault-start.sh"
       volumes:
       - name: config
         configMap:

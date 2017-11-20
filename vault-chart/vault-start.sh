@@ -1,43 +1,152 @@
 #!/bin/busybox sh
 
-DEBUG=${1:-0}
-PREREQS="jo jq vault base64 gpg"
+set -x 
+PREREQS="curl jo jq vault base64 gpg mailx"
+TMPSTORE="/var/tmp/init.out"
+VAULT_CONFIG="/etc/vault/cfg/config.json"
+DEBUG=0
 
-# XXX this whole script needs to be parameterized from template
-cat /etc/vault/cfg/config.json
+check_args()
+{
+  case $DEBUG in
+    FALSE|False|false|0|f|no)
+      DEBUG=0;;
+    TRUE|True|true|1|t|yes)
+      DEBUG=1;;
+    *)
+      DEBUG=0;;
+  esac
+}
 
-if [[ $DEBUG ]]
-then
-  :
-  #set -x
-fi
+validate_tmpstore()
+{
+  if [[ -e $TMPSTORE ]]
+  then
+    echo "CHECK ME: $(grep -c "Unseal Key" $TMPSTORE)"
+    cat $TMPSTORE
+    if [[ $(grep -c "Unseal Key" $TMPSTORE) -gt 0 ]]
+    then
+      return 0 
+    else
+      return 2
+    fi
+  else
+    return 1
+  fi
+}
 
 start_vault()
 {
-  printenv
+  start_time=$(date +s)
+  max_time_allowed=$((3 * 60))
 
-  if [[ ! $DEBUG ]]
+  printenv >&2
+  cat >&2 $VAULT_CONFIG
+
+  # if etcd is not up and running yet, then vault will not start.
+  # so let's give etcd a little bit to start up.
+  while true
+  do
+    vault server -config $VAULT_CONFIG &
+    V_ECODE=$?
+
+    if pidof vault
+    then
+      sleep 2
+      break
+    fi
+
+    if [[ $(($(date +%s) - $start_time)) -ge $max_time_allowed ]]
+    then
+      return 9
+    fi
+
+    sleep 1
+  done
+
+  # there are a few use cases here to worry about. 
+  # happening across multiple containers potentially.
+  # is vault already running or not.
+  # has vault attempted to init yet or not
+  # one of the vaults in the cluster will initialize, but
+  #  since these guys don't have IPC, the right hand won't
+  #  know what the left hand is doing. So this is a poor man's
+  #  way of trying to figure it out.
+  validate_tmpstore
+  INIT_ECODE=$?
+
+  if [[ $INIT_ECODE == 0 ]]
   then
-    vault_listener_proto={{- if .Values.vault.enableTLS }}"https"{{- else }}"http"{{- end }}
-    vault_listener_addr={{ .Values.vault.listenerAddress }}
-    vault_listener_port={{ .Values.vault.listenerPort }}
-
-    VAULT_ADDR=$vault_listener_proto://$vault_listener_addr:$vault_listener_port
+    V_INIT_DATA=$(cat $TMPSTORE)
+    return 0
   else
-    VAULT_INIT_VARS=$(yaml2json ~/projects/cyklops-config-vault/vault-svc-values.yaml | jq '.vault.init')
-    VAULT_ADDR=http://127.0.0.1:80
+    echo "INFO: initializing Vault!"
+    vault init > $TMPSTORE 2>&1
+    validate_tmpstore
+    INIT_ECODE=$?
   fi
 
-  export VAULT_ADDR VAULT_INIT_VARS
+  # now if $TMPSTORE is still empty (meaning vault is already inited and `vault init`
+  # returned an error) then this vault does not have the key data.
+  if [[ $INIT_ECODE != 0 ]]
+  then
+    echo >&2 """
+    INFO: this container does not hold the keys (exit code 
+    from validate_tmpstore() was $INIT_ECODE). Moving on.
+    """
+    return $INIT_ECODE
+  else
+    V_INIT_DATA=$(cat $TMPSTORE)
+    return 0
+  fi
 
-  # some day these paths should be parameterized.
-  echo "VAULT_ADDR is: $VAULT_ADDR"
+  return 0
+}
 
-  vault server -config /etc/vault/cfg/config.json &
-  sleep 2
+vault_unseal()
+{
+  key=$1
+  pl=""
 
-  V_INIT_DATA=$(vault init)
-  V_ECODE=$?
+  if [[ -n "$key" ]]
+  then
+    pl=$(jo key=$key)
+  else
+    echo >&2 "WARN: usage:  vault_unseal() <master key part>"
+    return 256
+  fi
+
+  if [[ -n "$pl" ]] 
+  then
+    # {
+    #   "sealed":false,
+    #   "t":3,
+    #   "n":5,
+    #   "progress":0,
+    #   "nonce":"",
+    #   "version":"0.8.3",
+    #   "cluster_name":"vault-cluster-e59ba2fe",
+    #   "cluster_id":"7bedd850-6629-fa6f-d109-14330d1a3125"
+    # }
+    raw_status="$(curl --write-out %{http_code} --silent -X PUT $VAULT_ADDR/v1/sys/unseal -d $pl)"
+    json_response="$(echo "$raw_status" | head -1)"
+    status_code="$(echo "$raw_status" | tail -1)"
+
+    if [[ $(echo "$status_code" | grep -cE '^[345]..') -gt 0 ]]
+    then
+      echo """
+      FATAL: unsealing failed and vault is not 
+      responding properly. HTTP STATUS CODE was: 
+      $status_code
+      """
+      return 201
+    fi
+  else
+    echo >&2 "WARN: payload key for unseal was empty."
+    return 200
+  fi
+
+  echo "$raw_status"
 }
 
 prepare_pubkey()
@@ -56,7 +165,7 @@ prepare_pubkey()
 
   # grab master_key_holder's base64 encoded public key 
   # and store it in a file preparing it for import
-  echo "$VAULT_INIT_VARS" | jq -rM --arg i $ctr '.key_masters[($i | tonumber)].pubkey' > $pubkey_b64
+  echo "$VAULT_INIT_VARS" | jq -rM --arg i $ctr '.recipients[($i | tonumber)].pubkey' > $pubkey_b64
 
   # if $pubkey_b64 exists and is not empty
   if [[ -s $pubkey_b64 ]]
@@ -121,8 +230,6 @@ vault_status()
       TOTAL_KEYS=$(echo "$V_STATUS"    | jq -rM '.key_shares')
       SEALED=$(echo "$V_STATUS"        | jq -rM '.sealed')
      #echo $V_STATUS
-    else
-      echo "{}"
     fi
 
     return 0
@@ -150,7 +257,7 @@ email_key()
   then
     if echo "$key"               | \
        gpg -a -r $rcpt --encrypt | \
-       mail -s 'Your master key part for Vault' $rcpt
+       mailx -s 'Your master key part for Vault' $rcpt
     then
       rm $pubkey_b64 $pubkey_asc 2>/dev/null
 
@@ -161,7 +268,7 @@ email_key()
       return 1
     fi
   else
-    if echo "$key" | mail -s 'Your master key part for Vault' $rcpt
+    if echo "$key" | mailx -s 'Your master key part for Vault' $rcpt
     then
       echo "INFO: PLAIN TEXT key-part at index $ctr sent to $rcpt successfully"
       return 0
@@ -184,26 +291,65 @@ check_prereqs()
   done
 }
 
-# Vault status can only work if the server has been started
-# and init'ed. If status works then there is noneed to proceed.
-if vault init -check
+while [[ $# != 0 ]]
+do
+  case $1 in
+    --debug) 
+      shift
+      DEBUG=$1
+    ;;
+    *)
+      DEBUG=${enableDebug:-0}
+      shift
+    ;;
+  esac
+done
+
+if [[ $DEBUG == 1 ]]
 then
-  echo >&2 "INFO: Vault is already running and initialized."
-  exit 0
+  set -x 
+
+  VAULT_INIT_VARS=$(yaml2json ~/projects/cyklops-config-vault/chart-vault-values.yaml | jq '.vault.init')
+  VAULT_ADDR=http://127.0.0.1:80
+else
+  vl_proto="$VAULT_LISTENER_PROTO"
+  vl_addr="$VAULT_LISTENER_ADDR"
+  vl_port="$VAULT_LISTENER_PORT"
+
+  VAULT_ADDR=$vl_proto://$vl_addr:$vl_port
 fi
 
+export VAULT_ADDR VAULT_INIT_VARS
+
+echo "VAULT_ADDR is: $VAULT_ADDR"
+
+check_args
 check_prereqs
-start_vault 
+start_vault; rc=$?
 vault_status
 
-if [[ $V_ECODE == 0 ]]
-then
+echo "return code from start_vault()"
+echo "$rc"
+num_tries=0
+echo "rc is: $rc"
+while [[ $rc != 5 && $num_tries -le 3 ]]
+do
+  ctr=0
+
   encrypt_msg=$(echo "$VAULT_INIT_VARS" | jq -rM '.encrypt_key_to_rcpt')
   auth_backends="$(echo $VAULT_INIT_VARS | jq -rM '.auth_backends[]')"
-  root_token="$(echo "$V_INIT_DATA" | grep 'Initial Root Token' | cut -d : -f 2 | tr -d ' ')"
 
-  failed=0
-  ctr=0
+  if [[ -n "$V_INIT_DATA" ]]
+  then
+    root_token="$(echo "$V_INIT_DATA" | \
+                  grep 'Initial Root Token' | \
+                  cut -d : -f 2 | tr -d ' ')"
+  else
+    echo >&2 "WARN: vault init returned no output. Skipping."
+    let num_tries++
+    continue
+  fi
+
 
   [[ -z "$VAULT_INIT_VARS" ]] && \
     {
@@ -227,7 +373,7 @@ then
     if [[ $SEALED == true ]]
     then
       # for each key, determine the corresponding key holder from values.yaml
-      master_key_holder="$(echo $VAULT_INIT_VARS | jq -rM --arg i $ctr '.key_masters[($i | tonumber)].email')"
+      master_key_holder="$(echo $VAULT_INIT_VARS | jq -rM --arg i $ctr '.recipients[($i | tonumber)].email')"
 
       # master_key_holder is not "null" or empty
       if [[ -n "$master_key_holder" && $master_key_holder != "null" ]]
@@ -236,7 +382,7 @@ then
         then
           if prepare_pubkey $master_key_holder $ctr
           then
-            if vault unseal $key > /dev/null 2>&1
+            if vault_unseal $key > /dev/null 2>&1
             then
               if ! email_key $key $master_key_holder 1 $ctr
               then
@@ -249,11 +395,12 @@ then
             exit $?
           fi
         else
-          if vault unseal $key >/dev/null 2>&1
+          if vault_unseal $key >/dev/null 2>&1
           then
             if ! email_key $key $master_key_holder 0 $ctr
             then
               echo >&2 "Quitting..."
+              exit 99
             fi
           else
             echo >&2 "ERROR: Unseal command for key at index $ctr failed to unseal vault."
@@ -294,8 +441,10 @@ then
       fi
     done
   fi
-else
-  echo >&2 "ERROR: VAULT START FAILED: error code was: $V_ECODE"
-fi
+
+  let num_tries++
+done
+
+#  echo >&2 "ERROR: VAULT START FAILED: error code was: $V_ECODE"
 
 tail -f /dev/null

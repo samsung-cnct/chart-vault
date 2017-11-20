@@ -66,12 +66,12 @@ data:
 
       listener "tcp" {
     {{- if .Values.vault.enableTLS }}
-        address = "0.0.0.0:443"
+        address = "0.0.0.0:{{ default 443 .Values.vault.listenerPort }}"
         tls_key_file = "/etc/vault/tls/vault.key"
         tls_cert_file = "/etc/vault/tls/vault.crt"
         tls_client_ca_file = "/etc/vault/tls/ca.crt"
     {{- else}}
-        address = "0.0.0.0:80"
+        address = "0.0.0.0:{{ default 80 .Values.vault.listenerPort }}"
         tls_disable = true
     {{- end}}
       }
