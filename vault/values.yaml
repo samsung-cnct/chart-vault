@@ -43,8 +43,11 @@ vault:
 # encrypted and sent to it's recipient. Pubkeys
 # need to be base64 encoded.
   init:
+    skip_unseal_vault: false
+    skip_sending_email: false
+    enable_auth_backends: true
     encrypt_key_to_rcpt: false
-    key_masters:
+    recipients:
       - email: ""
         pubkey: ""
       - email: ""

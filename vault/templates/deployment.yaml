@@ -60,10 +60,14 @@ spec:
           value: "{{ .Values.vault.listenerPort }}"
         - name: VAULT_INIT_VARS
           value: '{
+                    "skip_unseal_vault": {{ .Values.vault.init.skip_unseal_vault }},
+                    "skip_email_recipients": {{ .Values.vault.init.skip_email_recipients }},
                     "encrypt_key_to_rcpt": {{ .Values.vault.init.encrypt_key_to_rcpt }},
+                    "enable_auth_backends": {{ .Values.vault.init.enable_auth_backends }},
+
                     "recipients": 
                     [
-                      {{- range $i, $k := .Values.vault.init.key_masters }}
+                      {{- range $i, $k := .Values.vault.init.recipients }}
                       {{- if gt $i 0 }},{{ end }} 
                       {
                         "email": {{ $k.email | quote }}, 

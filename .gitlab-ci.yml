@@ -1,0 +1,79 @@
+---
+image: quay.io/samsung_cnct/helm-registry-agent:v0.7.4-helm_2.6
+
+variables:
+  APP_NAME: vault
+  REGISTRY_HOST: quay.io
+  REGISTRY_ORG: samsung_cnct
+  CHART_NAME: chart-vault
+  PUBCHART_NAME: vault-chart
+  CHART_REGISTRY_URI: ${REGISTRY_HOST}/${REGISTRY_ORG}/${PUBCHART_NAME}
+
+before_script:
+  - helm registry login -u ${REGISTRY_USERNAME} -p ${REGISTRY_PASSWORD} ${REGISTRY_HOST}
+  - export CHART_VER=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+  - export CHART_REL=$(git rev-list --count v${CHART_VER}..HEAD 2>/dev/null)
+  - export CHART_VER=0.8.3
+  - export CHART_REL=15
+
+stages:
+  - build
+  - test
+  - publish
+  - deploy
+
+build:
+  stage: build
+  artifacts:
+    paths:
+    - ${APP_NAME}/Chart.yaml
+    expire_in: 1 week
+  script:
+  - envsubst < build/Chart.yaml.in > ${APP_NAME}/Chart.yaml
+
+test:
+  image: quay.io/samsung_cnct/kraken-tools:v0.8
+  stage: test
+  variables:
+    NAMESPACE: ${APP_NAME}-test-${CI_PIPELINE_ID}
+    RELEASE: ${APP_NAME}-${CI_PIPELINE_ID}
+    DEPLOYMENT: ${APP_NAME}-${CI_PIPELINE_ID}-${APP_NAME}
+  before_script:
+  - mkdir /root/.kube
+  - echo ${TEST_KUBECONFIG} | base64 -d > /root/.kube/config
+  script:
+  - build/test.sh
+
+# beta channel is for internal tested release candidates
+publish-beta:
+  stage: publish
+  only:
+    - master
+  script:
+  - cd ${APP_NAME}
+  - helm registry push ${CHART_REGISTRY_URI} -c beta
+
+# prod channel is for official, vetted releases
+publish-prod:
+  stage: publish
+  only:
+    - /v[0-9]+\.[0-9]+\.[0-9]/
+  script:
+  - cd ${APP_NAME}
+  - helm registry push ${CHART_REGISTRY_URI} -c prod
+
+deploy-staging:
+  stage: deploy
+  only:
+    - /v[0-9]+\.[0-9]+\.[0-9]/
+  variables:
+    CHART_REGISTRY_CHANNEL: prod
+    NAMESPACE: ${APP_NAME}-staging
+  before_script:
+  - mkdir /root/.kube
+  - echo ${STAGING_KUBECONFIG} | base64 -d > /root/.kube/config
+  - helm init --client-only
+  script:
+  - cd ${APP_NAME}
+  - export HELM_OPTS="--install --namespace ${NAMESPACE}"
+  - helm registry upgrade ${CHART_REGISTRY_URI}:${CHART_REGISTRY_CHANNEL} -- ${APP_NAME} ${HELM_OPTS}
