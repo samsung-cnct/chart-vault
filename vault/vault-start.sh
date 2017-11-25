@@ -19,13 +19,13 @@ check_bargs()
   [[ -z "$arg" ]] && \
     {
       echo >&2 "check_bargs() requires arg passed from caller."
-      return 5
+      echo "unk"
     }
 
   case $arg in
-    FALSE|False|false|0|n|no)
+    [Ff][Aa][Ll][Ss][Ee]|0|[Nn][Oo])
       echo 0;;
-    TRUE|True|true|1|y|yes)
+    [Tt][Rr][Uu][Ee]|1|[Yy][Ee][Ss])
       echo 1;;
     *)
       echo 0;;
@@ -110,18 +110,24 @@ start_vault()
   #  since these guys don't have IPC, the right hand won't
   #  know what the left hand is doing. So this is a poor man's
   #  way of trying to figure it out.
-  validate_tmpstore
-  local init_ecode=$?
-
-  if [[ $init_ecode == 0 ]]
+  if [[ $SKIP_INIT ]]
   then
-    V_INIT_DATA=$(cat $TMPSTORE)
+    echo >&2 'INFO: skipping initialization as requested.'
     return 0
   else
-    echo "INFO: initializing Vault!"
-    vault init > $TMPSTORE 2>&1
     validate_tmpstore
-    init_ecode=$?
+    local init_ecode=$?
+
+    if [[ $init_ecode == 0 ]]
+    then
+      V_INIT_DATA=$(cat $TMPSTORE)
+      return 0
+    else
+      echo "INFO: initializing Vault!"
+      vault init > $TMPSTORE 2>&1
+      validate_tmpstore
+      init_ecode=$?
+    fi
   fi
 
   # now if $TMPSTORE is still empty (meaning vault is already inited and `vault init`
@@ -323,9 +329,9 @@ email_key()
   local enc=$3
   local ctr=$4
 
-  if [[ $SKIP_SEND_EMAIL == 1 ]]
+  if [[ $SKIP_EMAIL == 1 ]]
   then
-    echo 'INFO: Skipping sending master keys via email because "$SKIP_SEND_EMAIL" is true'
+    echo 'INFO: Skipping sending master keys via email because "$SKIP_EMAIL" is true'
     return 45
   fi
 
@@ -480,137 +486,143 @@ fi
 
 export VAULT_ADDR VAULT_INIT_VARS
 
+# The following variables are seeded by template/deployment.yaml and 
+# the values.yaml file are used by the deployment to give the proper
+# values per deployment.
+SKIP_INIT="$(check_bargs $(echo "$VAULT_INIT_VARS"            | jq -rM '.skip_init_vault'))"
+SKIP_UNSEAL="$(check_bargs $(echo "$VAULT_INIT_VARS"          | jq -rM '.skip_unseal_vault'))"
+SKIP_EMAIL="$(check_bargs $(echo "$VAULT_INIT_VARS"           | jq -rM '.skip_sending_email'))"
+ENCRYPT_MSG="$(check_bargs $(echo "$VAULT_INIT_VARS"          | jq -rM '.encrypt_key_to_rcpt'))"
+ENABLE_AUTH_BACKENDS="$(check_bargs $(echo "$VAULT_INIT_VARS" | jq -rM '.enable_auth_backends'))"
+AUTH_BACKENDS="$(echo $VAULT_INIT_VARS          | jq -rM '.auth_backends[]')"
+
 # AAAnnnd...
 # Now, do all the work.
 echo "INFO: VAULT_ADDR is: $VAULT_ADDR"
 
 check_prereqs
 start_vault; start_rc=$?
-vault_status
 
-# The following variables are seeded by template/deployment.yaml and 
-# the values.yaml file are used by the deployment to give the proper
-# values per deployment.
-SKIP_UNSEAL="$(check_bargs $(echo "$VAULT_INIT_VARS"          | jq -rM '.skip_unseal_vault'))"
-SKIP_SEND_EMAIL="$(check_bargs $(echo "$VAULT_INIT_VARS"      | jq -rM '.skip_sending_email'))"
-ENCRYPT_MSG="$(check_bargs $(echo "$VAULT_INIT_VARS"          | jq -rM '.encrypt_key_to_rcpt'))"
-ENABLE_AUTH_BACKENDS="$(check_bargs $(echo "$VAULT_INIT_VARS" | jq -rM '.enable_auth_backends'))"
-AUTH_BACKENDS="$(echo $VAULT_INIT_VARS          | jq -rM '.auth_backends[]')"
+if [[ $SKIP_INIT == 0 ]]
+then
 
-NUM_TRIES=0
+  vault_status
 
-while [[ $start_rc != 5 && $NUM_TRIES -le 3 ]]
-do
-  echo "INFO: Key threshold for this vault is: $KEY_THRESHOLD"
+  NUM_TRIES=0
 
-  if [[ -n "$V_INIT_DATA" ]]
-  then
-    ROOT_TOKEN="$(echo "$V_INIT_DATA" | \
-                  grep 'Initial Root Token' | \
-                  cut -d : -f 2 | tr -d ' ')"
-  else
-    echo >&2 "WARN: vault init returned no output. Skipping."
-    let NUM_TRIES++
-    continue
-  fi
+  while [[ $start_rc != 5 && $NUM_TRIES -le 3 ]]
+  do
+    echo "INFO: Key threshold for this vault is: $KEY_THRESHOLD"
 
-  [[ -z "$VAULT_INIT_VARS" ]] && \
-    {
-      echo >&2 "Cannot continue because \$VAULT_INIT_VARS do not exist."
-      exit 1
-    }
+    if [[ -n "$V_INIT_DATA" ]]
+    then
+      ROOT_TOKEN="$(echo "$V_INIT_DATA" | \
+                    grep 'Initial Root Token' | \
+                    cut -d : -f 2 | tr -d ' ')"
+    else
+      echo >&2 "WARN: vault init returned no output. Skipping."
+      let NUM_TRIES++
+      continue
+    fi
 
-  if [[ ! $SKIP_UNSEAL ]]
-  then
-    # iterate over each unseal key
-    for key in $(echo "$V_INIT_DATA" | grep -E "Unseal Key [0-9]:" | awk '{print $4}')
-    do
-      key_ctr=0
+    [[ -z "$VAULT_INIT_VARS" ]] && \
+      {
+        echo >&2 "Cannot continue because \$VAULT_INIT_VARS do not exist."
+        exit 1
+      }
 
-      [[ -z $key || "$key" == "" ]] && \
-        {
-          echo >&2 "FATAL: Hmm. Unable to extract keys from vault output. Cannot continue."
-          exit 10
-        }
+    if [[ ! $SKIP_UNSEAL ]]
+    then
+      # iterate over each unseal key
+      for key in $(echo "$V_INIT_DATA" | grep -E "Unseal Key [0-9]:" | awk '{print $4}')
+      do
+        key_ctr=0
 
-      vault_status
+        [[ -z $key || "$key" == "" ]] && \
+          {
+            echo >&2 "FATAL: Hmm. Unable to extract keys from vault output. Cannot continue."
+            exit 10
+          }
 
-      if [[ -n "$SEALED" ]]
-      then
-        if [[ $SEALED == 0 ]]
+        vault_status
+
+        if [[ -n "$SEALED" ]]
         then
-          echo "INFO: vault is not sealed. Exiting."
-          exit 0
-        fi
-      else
-        echo "FATAL: Unable to determine if vault is sealed."
-        exit 99
-      fi
-
-      # for each key, determine the corresponding key holder from values.yaml
-      KEY_HOLDER="$(master_key_holder $key_ctr)"
-
-      if [[ -n "$KEY_HOLDER" ]]
-      then
-        if prepare_pubkey $KEY_HOLDER $key_ctr
-        then
-          echo "INFO: pub key prep for $KEY_HOLDER complete."
-        else
-          pk_ec=$?
-
-          if [[ $pk_ec -ge 20 ]]
+          if [[ $SEALED == 0 ]]
           then
-            echo "FATAL: error occurred while importing public key. Quitting."
-            exit $pk_ec
-          else
-            echo "WARN: pub key prep for $KEY_HOLDER skipped. Moving on."
+            echo "INFO: vault is not sealed. Exiting."
+            exit 0
           fi
+        else
+          echo "FATAL: Unable to determine if vault is sealed."
+          exit 99
         fi
 
-        if vault_unseal $key
+        # for each key, determine the corresponding key holder from values.yaml
+        KEY_HOLDER="$(master_key_holder $key_ctr)"
+
+        if [[ -n "$KEY_HOLDER" ]]
         then
-          if ! email_key $key $KEY_HOLDER $ENCRYPT_MSG $key_ctr
+          if prepare_pubkey $KEY_HOLDER $key_ctr
           then
-            if [[ $? == 45 ]]
+            echo "INFO: pub key prep for $KEY_HOLDER complete."
+          else
+            pk_ec=$?
+
+            if [[ $pk_ec -ge 20 ]]
             then
-              # noop return code 45.
-              :
+              echo "FATAL: error occurred while importing public key. Quitting."
+              exit $pk_ec
             else
-              echo >&2 "Quitting..."
-              exit 99
+              echo "WARN: pub key prep for $KEY_HOLDER skipped. Moving on."
             fi
           fi
-        else
-          if [[ $? != 46 ]]
+
+          if vault_unseal $key
           then
-            echo >&2 "ERROR: Unseal command for key at index $key_ctr failed to unseal vault."
+            if ! email_key $key $KEY_HOLDER $ENCRYPT_MSG $key_ctr
+            then
+              if [[ $? == 45 ]]
+              then
+                # noop return code 45.
+                :
+              else
+                echo >&2 "Quitting..."
+                exit 99
+              fi
+            fi
+          else
+            if [[ $? != 46 ]]
+            then
+              echo >&2 "ERROR: Unseal command for key at index $key_ctr failed to unseal vault."
+            fi
           fi
+
+          ## XXX TODO AND DO WHAT WITH THE ROOT TOKEN?
+
+          if [[ $key_ctr -ge $KEY_THRESHOLD ]]
+          then
+            echo >&2 "INFO: Exhausted all key masters for available keys. Moving on."
+            break
+          fi
+        else
+          echo >&2 'WARN: Unable to obtain a master key holder from recipients list.'
+          exit 30
         fi
 
-        ## XXX TODO AND DO WHAT WITH THE ROOT TOKEN?
+        let key_ctr++
+        echo
+      done
 
-        if [[ $key_ctr -ge $KEY_THRESHOLD ]]
-        then
-          echo >&2 "INFO: Exhausted all key masters for available keys. Moving on."
-          break
-        fi
-      else
-        echo >&2 'WARN: Unable to obtain a master key holder from recipients list.'
-        exit 30
-      fi
+      let NUM_TRIES++
+      enable_auth_backends
+    else
+      echo 'INFO: Skipping unseal because "$SKIP_UNSEAL" is true'
+      break
+    fi
+  done
 
-      let key_ctr++
-      echo
-    done
-
-    let NUM_TRIES++
-    enable_auth_backends
-  else
-    echo 'INFO: Skipping unseal because "$SKIP_UNSEAL" is true'
-    break
-  fi
-done
-
-cleanup
+  cleanup
+fi
 
 tail -f /dev/null

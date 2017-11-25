@@ -23,8 +23,8 @@ vault:
 # etcd backend example
   etcdBackend:
     discoverySRV:
-    address: "etcd-vault-etcd"
-    port: 2379
+    address: "vault-etcd-vault-etcd.vault-etcd-staging"
+    port: 3379
     etcdApi: "v3"
     path: "vault/"
     sync: "false"
@@ -43,8 +43,9 @@ vault:
 # encrypted and sent to it's recipient. Pubkeys
 # need to be base64 encoded.
   init:
-    skip_unseal_vault: false
-    skip_sending_email: false
+    skip_init_vault: true
+    skip_unseal_vault: true
+    skip_email_recipients: true
     enable_auth_backends: true
     encrypt_key_to_rcpt: false
     recipients:
