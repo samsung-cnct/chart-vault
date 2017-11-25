@@ -3,6 +3,7 @@
 # Static globals
 
 # TODO add shred and mailx
+# fix this later
 #PREREQS="curl jo jq vault base64 gpg shred mail"
 PREREQS="curl jo jq vault base64 gpg"
 TMPSTORE="/var/tmp/init.out"
