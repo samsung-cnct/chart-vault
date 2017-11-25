@@ -3,7 +3,7 @@
 # Static globals
 
 # TODO add shred and mailx
-PREREQS="curl jo jq vault base64 gpg"
+PREREQS="curl jo jq vault base64 gpg shred mail"
 TMPSTORE="/var/tmp/init.out"
 VAULT_CONFIG="/etc/vault/cfg/config.json"
 DEBUG=0
@@ -347,7 +347,7 @@ email_key()
   then
     if echo "$key"               | \
        gpg -a -r $rcpt --encrypt | \
-       mailx -s 'Your master key part for Vault' $rcpt
+       mail -s 'Your master key part for Vault' $rcpt
     then
       rm $pubkey_b64 $pubkey_asc 2>/dev/null
 
@@ -358,7 +358,7 @@ email_key()
       return 1
     fi
   else
-    if echo "$key" | mailx -s 'Your master key part for Vault' $rcpt
+    if echo "$key" | mail -s 'Your master key part for Vault' $rcpt
     then
       echo "INFO: PLAIN TEXT key-part at index $ctr sent to $rcpt successfully"
       return 0
@@ -431,9 +431,8 @@ E
 
 cleanup()
 {
-  :
-  #echo >&2 'Cleaning up!'
-  #shred -z -n3 -u $TMPSTORE
+  echo >&2 'Cleaning up!'
+  shred -z -n3 -u $TMPSTORE
 }
 
 # ******************************************************************8
