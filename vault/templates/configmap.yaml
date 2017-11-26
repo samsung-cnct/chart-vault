@@ -48,9 +48,9 @@ data:
           cluster_addr = {{ default "" .Values.vault.etcdBackend.clusterAddress | quote }}
           disable_clustering = {{ default "false" .Values.vault.etcdBackend.disableClustering | quote }}
       {{- if .Values.vault.enableTLS }}
-          redirect_addr = {{ default "https://vault-vault" .Values.vault.etcdBackend.redirectAddr | quote }}
+          redirect_addr = "{{ default "https://0.0.0.0" .Values.vault.etcdBackend.redirectAddr }}:{{ default 8200 .Values.vault.etcdBackend.port }}"
       {{- else }}
-          redirect_addr = {{ default "http://vault-vault" .Values.vault.etcdBackend.redirectAddr | quote }}
+          redirect_addr = "{{ default "http://0.0.0.0" .Values.vault.etcdBackend.redirectAddr }}:{{ default 8200 .Values.vault.etcdBackend.port }}"
       {{- end }}
       {{- else }}
           ha_enabled = {{ "false" | quote }}
