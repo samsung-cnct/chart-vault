@@ -7,8 +7,12 @@ vault:
   nodePort: 32443
   listenerAddress: "127.0.0.1"
   listenerPort: 8200
+# useRedirectAddr: false
+  redirectAddr: "vault-vault.vault-staging"
+  clusterAddress: "vault-vault.vault-staging"
+  redirectPort: 8200
 # Valid choices are [etcd, consul, inmem]
-  backend: etcd
+  backend: "etcd"
   enableTLS: false
   enableDebug: true
   replicas: 3
@@ -32,16 +36,11 @@ vault:
     password: ""
     scheme: "http"
     token: "token"
-    clusterAddress: ""
     disableClustering: "false"
     clientCA:
     clientCert:
     clientKey:
 
-# At runtime, vault gets properly init'ed and
-# each key, up to "Key Threshold" keys, is pgp
-# encrypted and sent to it's recipient. Pubkeys
-# need to be base64 encoded.
   init:
     skip_init_vault: true
     skip_unseal_vault: true

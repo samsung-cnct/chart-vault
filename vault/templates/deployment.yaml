@@ -58,6 +58,8 @@ spec:
           value: "{{ .Values.vault.listenerAddress }}"
         - name: VAULT_LISTENER_PORT
           value: "{{ .Values.vault.listenerPort }}"
+        - name: VAULT_ADDR
+          value: "{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}://{{ .Values.vault.listenerAddress }}:{{ .Values.vault.listenerPort }}"
         - name: VAULT_INIT_VARS
           value: '{
                     "skip_init_vault": {{ default true .Values.vault.init.skip_init_vault | quote }},

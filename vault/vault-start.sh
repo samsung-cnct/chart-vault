@@ -483,9 +483,11 @@ else
   vl_port="$VAULT_LISTENER_PORT"
 
   VAULT_ADDR=$vl_proto://$vl_addr:$vl_port
+  VAULT_CLUSTER_ADDR=$vl_proto://$(hostname -i):8201
+  VAULT_API_ADDR=$vl_proto://$(hostname -i):$vl_port
 fi
 
-export VAULT_ADDR VAULT_INIT_VARS
+export VAULT_ADDR VAULT_INIT_VARS VAULT_CLUSTER_ADDR VAULT_API_ADDR
 
 # The following variables are seeded by template/deployment.yaml and 
 # the values.yaml file are used by the deployment to give the proper
@@ -500,6 +502,8 @@ AUTH_BACKENDS="$(echo $VAULT_INIT_VARS          | jq -rM '.auth_backends[]')"
 # AAAnnnd...
 # Now, do all the work.
 echo "INFO: VAULT_ADDR is: $VAULT_ADDR"
+echo "VAULT_API_ADDR: $VAULT_API_ADDR"
+echo "VAULT_CLUSTER_ADDR: $VAULT_CLUSTER_ADDR"
 
 check_prereqs
 start_vault; start_rc=$?

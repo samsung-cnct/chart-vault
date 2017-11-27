@@ -34,6 +34,7 @@ data:
       {{- if .Values.vault.etcdBackend.discoverySRV }}
           discovery_srv = {{ .Values.Vault.etcdBackend.discoverySRV }}
       {{- end }}
+
       {{- if .Values.vault.enableTLS }}
           address = "https://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
           tls_ca_file = {{ default "/etc/vault/tls/ca.crt" .Values.vault.etcdBackend.clientCA | quote }}
@@ -42,22 +43,28 @@ data:
       {{- else }}
           address = "http://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
       {{- end }}
+
           etcd_api = {{ .Values.vault.etcdBackend.etcdApi | quote }}
+          disable_clustering = {{ default "false" .Values.vault.etcdBackend.disableClustering | quote }}
+
       {{- if gt .Values.vault.replicas 1.0 }}
           ha_enabled = {{ "true" | quote }}
-          cluster_addr = {{ default "" .Values.vault.etcdBackend.clusterAddress | quote }}
-          disable_clustering = {{ default "false" .Values.vault.etcdBackend.disableClustering | quote }}
+          
+          # Overridden by env var set in start script. That should be used instead of this.
       {{- if .Values.vault.enableTLS }}
-          redirect_addr = "{{ default "https://0.0.0.0" .Values.vault.etcdBackend.redirectAddr }}:{{ default 8200 .Values.vault.etcdBackend.port }}"
+          redirect_addr = "https://{{ default "0.0.0.0" .Values.vault.redirectAddr }}:{{ default 8200 .Values.vault.redirectPort }}"
       {{- else }}
-          redirect_addr = "{{ default "http://0.0.0.0" .Values.vault.etcdBackend.redirectAddr }}:{{ default 8200 .Values.vault.etcdBackend.port }}"
+          redirect_addr = "http://{{ default "0.0.0.0" .Values.vault.redirectAddr }}:{{ default 8200 .Values.vault.redirectPort }}"
       {{- end }}
+
       {{- else }}
           ha_enabled = {{ "false" | quote }}
       {{- end }}
+
       {{- if .Values.vault.etcdBackend.path }}
           path = {{ .Values.vault.etcdBackend.path | quote }}
       {{- end }}
+
           sync = {{ default "false" .Values.vault.etcdBackend.sync | quote }}
           username = {{ default "" .Values.vault.etcdBackend.username | quote }}
           password = {{ default "" .Values.vault.etcdBackend.password | quote }}
