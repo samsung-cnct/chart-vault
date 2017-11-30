@@ -1,5 +1,4 @@
 ---
-# gitlab-ci for helm chart for vault
 image: quay.io/samsung_cnct/helm-registry-agent:v0.7.4-helm_2.6
 
 variables:
