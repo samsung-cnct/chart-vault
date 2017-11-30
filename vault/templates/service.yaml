@@ -10,9 +10,6 @@ metadata:
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 spec:
-{{- if .Values.vault.nodePort }}
-  type: NodePort
-{{- end }}
   ports:
     - name: client-port
       protocol: TCP
@@ -22,9 +19,6 @@ spec:
 {{- else }}
       port: 80
       targetPort: 8200
-{{- end }}
-{{- if .Values.vault.nodePort }}
-      nodePort: {{ .Values.vault.nodePort }}
 {{- end }}
   selector:
     app: {{ template "vault.fullname" . }}

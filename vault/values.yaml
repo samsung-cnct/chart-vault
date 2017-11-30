@@ -4,7 +4,6 @@ vault:
   imageTag: "0.8.3"
   imagePullPolicy: "Always"
   component: "vault"
-  nodePort: 32443
   listenerAddress: "127.0.0.1"
   listenerPort: 8200
 # useRedirectAddr: false

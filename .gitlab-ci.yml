@@ -76,4 +76,4 @@ deploy-staging:
   script:
   - cd ${APP_NAME}
   - export HELM_OPTS="--install --namespace ${NAMESPACE}"
-  - helm registry upgrade ${CHART_REGISTRY_URI}:${CHART_REGISTRY_CHANNEL} -- ${APP_NAME} ${HELM_OPTS}
+  - helm registry install ${CHART_REGISTRY_URI}:${CHART_REGISTRY_CHANNEL} -- ${APP_NAME} ${HELM_OPTS}
