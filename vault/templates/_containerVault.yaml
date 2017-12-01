@@ -1,0 +1,56 @@
+{{/*
+Create helm partial for Vault container
+*/}}
+{{- define "containerVault" }}
+- name: {{ template "vault.fullname" . }}
+  image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+  securityContext:
+    capabilities:
+      add:
+      - IPC_LOCK
+  imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
+  ports:
+{{- if .Values.vault.enableTLS }}
+  - name: https
+    containerPort: 443
+{{- else }}
+  - name: http
+    containerPort: 80
+{{- end }}
+  volumeMounts:
+  - name: config
+    mountPath: /etc/vault/cfg
+    readOnly: true
+{{- if .Values.vault.enableTLS }}
+  - name: tls
+    mountPath: /etc/vault/tls
+{{- end }}
+  env:
+  - name: MY_POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: SCRIPT
+    value: &startVault |-
+      #!/bin/busybox sh
+
+      export VAULT_API_ADDR="{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}://${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}"
+      export VAULT_CLUSTER_ADDR="${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.clusterListenerPort }}"
+
+      # print current environment
+      printenv
+
+      cat /etc/vault/cfg/config.hcl
+
+      # start vault server
+      vault server -config=/etc/vault/cfg/config.hcl{{- if .Values.vault.enableDebug }} -log-level=debug{{- end }}
+  resources:
+    limits:
+      cpu: {{ .Values.vault.cpu }}
+      memory: {{ .Values.vault.memory }}
+    requests:
+      cpu: {{ .Values.vault.cpu }}
+      memory: {{ .Values.vault.memory }}
+  command: [ "bin/sh" ]
+  args: ["-c", *startVault]
+{{- end }}

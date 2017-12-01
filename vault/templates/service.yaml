@@ -11,14 +11,23 @@ metadata:
     release: {{ .Release.Name }}
 spec:
   ports:
-    - name: client-port
+    - name: client-port-external
       protocol: TCP
 {{- if .Values.vault.enableTLS }}
       port: 443
-      targetPort: 8200
+      targetPort: {{ .Values.vault.listenerPort }}
 {{- else }}
       port: 80
-      targetPort: 8200
+      targetPort: {{ .Values.vault.listenerPort }}
+{{- end }}
+    - name: client-port
+      protocol: TCP
+      port: {{ .Values.vault.listenerPort }}
+    - name: cluster-port
+      protocol: TCP
+      port: {{ .Values.vault.clusterListenerPort }}
+{{- if .Values.vault.nodePort }}
+      nodePort: {{ .Values.vault.nodePort }}
 {{- end }}
   selector:
     app: {{ template "vault.fullname" . }}

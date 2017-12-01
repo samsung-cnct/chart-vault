@@ -8,6 +8,7 @@ keywords:
   - secrets
 home: https://github.com/samsung-cnct/chart-vault
 sources:
+- https://www.vaultproject.io
 - https://github.com/samsung-cnct/chart-vault
 maintainers:
 - name: Samsung CNCT

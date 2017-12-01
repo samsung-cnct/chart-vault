@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: {{ template "vault.fullname" . }}
+  labels:
+    app: {{ template "vault.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  serviceName: {{ template "vault.fullname" . }}
+  replicas: {{ .Values.vault.replicas }}
+  selector:
+    matchLabels:
+      app: {{ template "vault.fullname" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "vault.fullname" . }}
+    spec:
+      nodeSelector:
+        nodepool: clusterNodes
+      containers:
+      {{ include "containerVault" . | indent 6 }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "vault.fullname" . }}-run
+{{- if .Values.vault.enableTLS }}
+      - name: tls
+        secret:
+          secretName: {{ template "vault.fullname" . }}.tls
+{{- end }}
+{{- if .Values.vault.tolerations }}
+      tolerations:
+      {{- range .Values.vault.tolerations }}
+      - key: {{ .key | default ("") }}
+        value: {{ .value | default ("")}}
+        operator: {{ .operator | default ("Equal") }}
+        effect: {{ .effect  | default ("")}}
+      {{- end }}
+{{- end }}
+{{- if .Values.vault.scheduling.affinity }}
+{{- if .Values.vault.scheduling.affinity.node }}
+{{- if .Values.vault.scheduling.affinity.node.labels }}
+      affinity:
+        nodeAffinity:
+          {{ .Values.vault.scheduling.affinity.node.type }}:
+            nodeSelectorTerms:
+            - matchExpressions:
+                {{- range .Values.vault.scheduling.affinity.node.labels }}
+                - key: {{ .key }}
+                  operator: {{ .operator }}
+                  values:
+                  {{- range .values }}
+                  - {{ . }}
+                  {{- end }}
+                {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

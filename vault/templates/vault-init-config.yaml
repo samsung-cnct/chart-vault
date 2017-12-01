@@ -1,0 +1,19 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "vault.fullname" . }}-config
+  labels:
+    app: {{ template "vault.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+data:
+  init.json: |
+    {
+      {{ if .Values.vault.pgpKeys }}"pgp_keys": {{ toJson .Values.vault.pgpKeys }},{{ end }}
+      {{ if .Values.vault.rootPgpKey }}"root_token_pgp_key": "{{ .Values.vault.rootPgpKey }}",{{ end }}
+      "secret_shares": {{ .Values.vault.secretShares }},
+      "secret_threshold": {{ .Values.vault.unsealShares }}
+    }

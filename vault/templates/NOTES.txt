@@ -1,0 +1,24 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+Your Vault server located at {{ if .Values.vault.enableTLS }}https{{ else }}http{{ end }}://{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }} is now sealed.
+
+{{- if eq .Values.vault.backend "etcd" }}
+(unless vault etcd path {{ default (print .Release.Namespace "/" .Release.Name "/" ) .Values.vault.etcdBackend.path | quote }} existed prior to the installation of this chart)
+{{- end }}
+
+Unseal keys and root token are in the {{ .Release.Namespace }}/{{ template "vault.fullname" . }}-keys cluster secret.
+
+{{- if .Values.vault.pgpKeys }}
+Unseal keys are encrypted with public keys from vault.pgpKeys value array (order preserved)
+{{- end }}
+
+{{- if .Values.vault.rootPgpKey }}
+Root token is encrypted with public key from vault.rootPgpKey value
+{{- end }}
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get {{ .Release.Name }}

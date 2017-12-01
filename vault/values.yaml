@@ -1,70 +1,45 @@
 ---
+clusterDomain: cluster.local
 vault:
   image: "quay.io/samsung_cnct/vault"
-  imageTag: "0.8.3"
+  imageTag: "0.9.0"
   imagePullPolicy: "Always"
   component: "vault"
-  listenerAddress: "127.0.0.1"
+  nodePort:
   listenerPort: 8200
-# useRedirectAddr: false
-  redirectAddr: "vault-vault.vault-staging"
-  clusterAddress: "vault-vault.vault-staging"
-  redirectPort: 8200
-# Valid choices are [etcd, consul, inmem]
+  clusterListenerPort: 8201
+# Valid choices are [etcd, inmem]
   backend: "etcd"
   enableTLS: false
   enableDebug: true
   replicas: 3
-  cpu: "512m"
+  secretShares: 5
+  unsealShares: 3
+  initBackoff: 10
+  initDeadline: 180
+  pgpKeys:
+  rootPgpKey: 
+  cpu: "500m"
   memory: "200Mi"
-
-# Consul backend example
-  consulBackend:
-    address: "consul-consul:8500"
-    token: "token"
-
-# etcd backend example
+# etcd
   etcdBackend:
     discoverySRV:
     address: "vault-etcd-vault-etcd.vault-etcd-staging"
     port: 3379
     etcdApi: "v3"
-    path: "vault/"
+    path:
     sync: "false"
     username: ""
     password: ""
-    scheme: "http"
-    token: "token"
     disableClustering: "false"
     clientCA:
     clientCert:
     clientKey:
-
-  init:
-    skip_init_vault: true
-    skip_unseal_vault: true
-    skip_email_recipients: true
-    enable_auth_backends: true
-    encrypt_key_to_rcpt: false
-    recipients:
-      - email: ""
-        pubkey: ""
-      - email: ""
-        pubkey: ""
-      - email: ""
-        pubkey: ""
-    auth_backends:
-      - github
-      - kubernetes
-      - aws
-      - approle
-
 # TLS info
   tls:
     cert: ""
     key: ""
     ca: ""
-
   tolerations:
    # - key: taintKey
    #   value: taintValue
