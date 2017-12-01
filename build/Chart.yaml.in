@@ -1,17 +1,16 @@
----
-name: vault
+name: ${PROJECT_NAME} # must match the artifact name & the subdirectory 'zabra' must also match)
 version: ${CHART_VER}-${CHART_REL}
-description: Hashicorp Vault server
+description: Sample chart template for registry
 keywords:
-- Vault
-- Hashicorp
-- Secret
-home: https://github.com/samsung-cnct/vault-chart
+  - kraken
+  - vault
+  - helm chart
+  - secrets
+home: https://github.com/samsung-cnct/chart-vault
 sources:
-- https://releases.hashicorp.com/vault/${CHART_VER}/vault_${CHART_VER}_linux_amd64.zip
-- https://www.vaultproject.io
+- https://github.com/samsung-cnct/chart-vault
 maintainers:
 - name: Samsung CNCT
   email: samsung.cloudnative@gmail.com
-icon: null
+icon: https://github.com/samsung-cnct/solas/docs/images/samsung-logo.svg
 engine: gotpl

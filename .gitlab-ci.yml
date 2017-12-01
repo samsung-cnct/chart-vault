@@ -1,79 +1,54 @@
----
-image: quay.io/samsung_cnct/helm-registry-agent:v0.7.4-helm_2.6
+image: $HELM_REGISTRY_IMAGE:$HELM_REGISTRY_VERSION
 
 variables:
-  APP_NAME: vault
-  REGISTRY_HOST: quay.io
-  REGISTRY_ORG: samsung_cnct
-  CHART_NAME: chart-vault
+  REGISTRY: quay.io
+  REGISTRY_USER: your_org # we set this to override to samsung_cnct in gitlab Group Variables
+  CHART_NAME: vault
   PUBCHART_NAME: vault-chart
-  CHART_REGISTRY_URI: ${REGISTRY_HOST}/${REGISTRY_ORG}/${PUBCHART_NAME}
-
-before_script:
-  - helm registry login -u ${REGISTRY_USERNAME} -p ${REGISTRY_PASSWORD} ${REGISTRY_HOST}
-  - export CHART_VER=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
-  - export CHART_REL=$(git rev-list --count v${CHART_VER}..HEAD 2>/dev/null)
-  - export CHART_VER=0.8.3
-  - export CHART_REL=20
+  ROBOT_ACCOUNT: chartvaultrw
+  HELM_REGISTRY_IMAGE: quay.io/samsung_cnct/helm-registry-agent
+  HELM_REGISTRY_VERSION: v0.7.4-helm_2.6
 
 stages:
   - build
   - test
   - publish
-  - deploy
 
-build:
+before_script:
+  - helm registry login -u ${REGISTRY_USER}+${ROBOT_ACCOUNT} -p ${REGISTRY_PASSWORD} ${REGISTRY}
+  - export PROJECT_NAME=${CHART_NAME}
+  - export CHART_VER=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//')
+  - export CHART_REL=$(git rev-list --count v${CHART_VER}..HEAD 2>/dev/null)
+
+build_chart:
   stage: build
-  artifacts:
+  only:
+    - tags
+    - branches
+  artifacts: 
     paths:
-    - ${APP_NAME}/Chart.yaml
-    expire_in: 1 week
+      - ${CHART_NAME}
   script:
-  - envsubst < build/Chart.yaml.in > ${APP_NAME}/Chart.yaml
+    - build/build.sh
 
-test:
-  image: quay.io/samsung_cnct/kraken-tools:v0.8
+helm_test:
   stage: test
-  variables:
-    NAMESPACE: ${APP_NAME}-test-${CI_PIPELINE_ID}
-    RELEASE: ${APP_NAME}-${CI_PIPELINE_ID}
-    DEPLOYMENT: ${APP_NAME}-${CI_PIPELINE_ID}-${APP_NAME}
-  before_script:
-  - mkdir /root/.kube
-  - echo ${TEST_KUBECONFIG} | base64 -d > /root/.kube/config
+  only:
+    - tags
+    - branches
   script:
-  - build/test.sh
+    - build/test.sh
 
-# beta channel is for internal tested release candidates
-publish-beta:
+helm_publish_alpha:
   stage: publish
   only:
     - master
   script:
-  - cd ${APP_NAME}
-  - helm registry push ${CHART_REGISTRY_URI} -c beta
+    - cd ${CHART_NAME} && helm registry push ${REGISTRY}/${REGISTRY_USER}/${PUBCHART_NAME} -c alpha
 
-# prod channel is for official, vetted releases
-publish-prod:
+helm_publish_tag:
   stage: publish
   only:
-    - /v[0-9]+\.[0-9]+\.[0-9]/
+    - /v[0-9]+\.[0-9]+(\.[0-9]+[a-z]?)?/
   script:
-  - cd ${APP_NAME}
-  - helm registry push ${CHART_REGISTRY_URI} -c prod
-
-deploy-staging:
-  stage: deploy
-  only:
-    - /v[0-9]+\.[0-9]+\.[0-9]/
-  variables:
-    CHART_REGISTRY_CHANNEL: prod
-    NAMESPACE: ${APP_NAME}-staging
-  before_script:
-  - mkdir /root/.kube
-  - echo ${STAGING_KUBECONFIG} | base64 -d > /root/.kube/config
-  - helm init --client-only
-  script:
-  - cd ${APP_NAME}
-  - export HELM_OPTS="--install --namespace ${NAMESPACE}"
-  - helm registry install ${CHART_REGISTRY_URI}:${CHART_REGISTRY_CHANNEL} -- ${APP_NAME} ${HELM_OPTS}
+    - cd ${CHART_NAME} && helm registry push ${REGISTRY}/${REGISTRY_USER}/${PUBCHART_NAME} -c stable

@@ -1,10 +1,15 @@
-#!/bin/sh
+#! /bin/sh
 
-cat $APP_NAME/Chart.yaml
-echo "namespace for this build is: $NAMESPACE"
-helm lint ${APP_NAME} || exit $?
-helm install --name ${RELEASE} --namespace ${NAMESPACE} ${APP_NAME}
-kubectl rollout status deployment/${DEPLOYMENT} -n ${NAMESPACE}
-helm delete --purge ${RELEASE}
-kubectl delete namespace ${NAMESPACE}
+[[ -z "$CHART_NAME"   ]] && \
+  {
+    echo >&2 "Var '$CHART_NAME' is empty. Cannot continue."
+    exit 1
+  }
 
+[[ ! -d "${CHART_NAME}" ]] && \
+  {
+    echo >&2 "Directory for chart '$CHART_NAME' does not exist."
+    exit 1
+  }
+
+helm lint ${CHART_NAME}
