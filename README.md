@@ -54,7 +54,11 @@ helmConfigs:
 | vault.listenerPort | Vault client listener port | 8200 |
 | vault.clusterListenerPort | Vault cluster listener port | 8201 |
 | vault.backend | Vault storage backend | "etcd" |
-| vault.enableTLS | enable TLS for client communication | false |
+| vault.tls.enabled | Enable TLS for vault client communication. | false |    
+| vault.tls.secret.name | Vault tls secret name to mount. | N/A | 
+| vault.tls.secret.certFile | Vault tls secret cert file key. | N/A | 
+| vault.tls.secret.keyFile | Vault tls secret key file key. | N/A | 
+| vault.tls.secret.caFile | Vault tls secret ca file key. | N/A | 
 | vault.enableDebug | Vault debug logs | false |
 | vault.replicas | Number of vault instances to use. | 3 |
 | vault.secretShares | Number of vault master unseal keys to generate. | 5 |
@@ -80,8 +84,11 @@ Note: ha_enabled is automatically set to true if replicas is > 1 and the backend
 | etcdBackend.username | Specifies the username to use when authenticating with the etcd server | N/A |    
 | etcdBackend.password | Specifies the password to use when authenticating with the etcd server | N/A |    
 | etcdBackend.disableClustering | Whether clustering features such as request forwarding are enabled. | "false" |    
-| etcdBackend.clientCA | Specifies the path to the CA certificate used for Etcd communication. | N/A |    
-| etcdBackend.clientCert | Specifies the path to the cert certificate used for Etcd communication. | N/A |    
+| etcdBackend.tls.enabled | Enable TLS for etcd backend. | false |    
+| etcdBackend.tls.secret.name | Etcd tls secret name to mount. | N/A | 
+| etcdBackend.tls.secret.certFile | Etcd tls secret cert file key. | N/A | 
+| etcdBackend.tls.secret.keyFile | Etcd tls secret key file key. | N/A | 
+| etcdBackend.tls.secret.caFile | Etcd tls secret ca file key. | N/A |    
 | etcdBackend.clientKey | Specifies the path to the key certificate used for Etcd communication. | N/A | 
 | etcdBackend.path | Etcd path for vault storage. | "release-namespace/release-name/" |    
 

@@ -28,10 +28,15 @@ spec:
       - name: config
         configMap:
           name: {{ template "vault.fullname" . }}-run
-{{- if .Values.vault.enableTLS }}
-      - name: tls
+{{- if .Values.vault.tls.enabled }}
+      - name: vaultTls
         secret:
-          secretName: {{ template "vault.fullname" . }}.tls
+          secretName: {{ .Values.vault.tls.secret.name }}
+{{- end }}
+{{- if .Values.vault.etcdBackend.tls.enabled }}
+      - name: etcdTls
+        secret:
+          secretName: {{ .Values.vault.etcdBackend.tls.secret.name }}
 {{- end }}
 {{- if .Values.vault.tolerations }}
       tolerations:

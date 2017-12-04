@@ -32,14 +32,21 @@ vault:
     username: ""
     password: ""
     disableClustering: "false"
-    clientCA:
-    clientCert:
-    clientKey:
+    tls:
+      enabled: false
+      secret:
+        name:
+        certFile:
+        keyFile:
+        caFile:
 # TLS info
   tls:
-    cert: ""
-    key: ""
-    ca: ""
+    enabled: false
+    secret:
+      name:
+      certFile:
+      keyFile:
+      caFile:
   tolerations:
    # - key: taintKey
    #   value: taintValue

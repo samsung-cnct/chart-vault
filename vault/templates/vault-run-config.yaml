@@ -24,11 +24,11 @@ data:
           discovery_srv = {{ .Values.Vault.etcdBackend.discoverySRV }}
       {{- end }}
 
-      {{- if .Values.vault.enableTLS }}
+      {{- if .Values.vault.etcdBackend.tls.enabled }}
           address = "https://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
-          tls_ca_file = {{ default "/etc/vault/tls/ca.crt" .Values.vault.etcdBackend.clientCA | quote }}
-          tls_cert_file = {{ default "/etc/vault/tls/vault.crt" .Values.vault.etcdBackend.clientCert | quote }}
-          tls_key_file = {{ default "/etc/vault/tls/vault.key" .Values.vault.etcdBackend.clientKey | quote }}
+          tls_ca_file = "/etc/etcd/tls/{{ .Values.vault.etcdBackend.tls.secret.caFile }}"
+          tls_cert_file = "/etc/etcd/tls/{{ .Values.vault.etcdBackend.tls.secret.certFile }}"
+          tls_key_file = "/etc/etcd/tls/{{ .Values.vault.etcdBackend.tls.secret.keyFile }}"
       {{- else }}
           address = "http://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
       {{- end }}
@@ -50,10 +50,10 @@ data:
       listener "tcp" {
         address = "0.0.0.0:{{ .Values.vault.listenerPort }}"
         cluster_address = "0.0.0.0:{{ .Values.vault.clusterListenerPort }}"
-    {{- if .Values.vault.enableTLS }}
-        tls_key_file = "/etc/vault/tls/vault.key"
-        tls_cert_file = "/etc/vault/tls/vault.crt"
-        tls_client_ca_file = "/etc/vault/tls/ca.crt"
+    {{- if .Values.vault.tls.enabled }}
+        tls_key_file = "/etc/vault/tls/{{ .Values.vault.tls.secret.keyFile }}"
+        tls_cert_file = "/etc/vault/tls/{{ .Values.vault.tls.secret.certFile }}"
+        tls_client_ca_file = "/etc/vault/tls/{{ .Values.vault.tls.secret.caFile }}"
     {{- else}}
         tls_disable = "true"
     {{- end}}

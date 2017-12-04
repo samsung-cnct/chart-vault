@@ -21,9 +21,13 @@ Create helm partial for Vault container
   - name: config
     mountPath: /etc/vault/cfg
     readOnly: true
-{{- if .Values.vault.enableTLS }}
-  - name: tls
+{{- if .Values.vault.tls.enabled }}
+  - name: vaultTls
     mountPath: /etc/vault/tls
+{{- end }}
+{{- if .Values.vault.etcdBackend.tls.enabled }}
+  - name: etcdTls
+    mountPath: /etc/etcd/tls
 {{- end }}
   env:
   - name: MY_POD_NAME
