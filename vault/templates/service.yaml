@@ -20,9 +20,6 @@ spec:
       port: 80
       targetPort: {{ .Values.vault.listenerPort }}
 {{- end }}
-    - name: client-port
-      protocol: TCP
-      port: {{ .Values.vault.listenerPort }}
     - name: cluster-port
       protocol: TCP
       port: {{ .Values.vault.clusterListenerPort }}

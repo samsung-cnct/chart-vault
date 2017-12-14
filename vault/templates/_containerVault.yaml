@@ -38,8 +38,12 @@ Create helm partial for Vault container
     value: &startVault |-
       #!/bin/busybox sh
 
-      export VAULT_API_ADDR="{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}://${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}"
-      export VAULT_CLUSTER_ADDR="${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.clusterListenerPort }}"
+      scheme="{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}"
+      addr="${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
+      port={{- if .Values.vault.enableTLS }}443{{- else }}80{{- end}}
+
+      export VAULT_API_ADDR="$scheme://$addr:$port"
+      export VAULT_CLUSTER_ADDR="$addr:{{ .Values.vault.clusterListenerPort }}"
 
       # print current environment
       printenv
