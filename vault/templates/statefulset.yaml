@@ -6,7 +6,6 @@ metadata:
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 spec:
@@ -28,16 +27,16 @@ spec:
       - name: config
         configMap:
           name: {{ template "vault.fullname" . }}-run
-{{- if .Values.vault.tls.enabled }}
-      - name: vaulttls
+      {{- if .Values.vault.tls.enabled }}
+      - name: vault-tls
         secret:
           secretName: {{ .Values.vault.tls.secret.name }}
-{{- end }}
-{{- if .Values.vault.etcdBackend.tls.enabled }}
-      - name: etcdtls
+      {{- end }}
+      {{- if .Values.vault.etcdBackend.tls.enabled }}
+      - name: etcd-tls
         secret:
           secretName: {{ .Values.vault.etcdBackend.tls.secret.name }}
-{{- end }}
+      {{- end }}
 {{- if .Values.vault.tolerations }}
       tolerations:
       {{- range .Values.vault.tolerations }}

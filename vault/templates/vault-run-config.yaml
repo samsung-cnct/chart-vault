@@ -6,7 +6,6 @@ metadata:
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 data:

@@ -6,25 +6,25 @@ metadata:
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    component: "{{ .Release.Name }}-{{ .Values.vault.component }}"
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 spec:
   ports:
     - name: client-port-external
       protocol: TCP
-{{- if .Values.vault.enableTLS }}
+      {{- if .Values.vault.enableTLS }}
       port: 443
       targetPort: {{ .Values.vault.listenerPort }}
-{{- else }}
+      {{- else }}
       port: 80
       targetPort: {{ .Values.vault.listenerPort }}
-{{- end }}
+      {{- end }}
     - name: cluster-port
       protocol: TCP
       port: {{ .Values.vault.clusterListenerPort }}
-{{- if .Values.vault.nodePort }}
+      {{- if .Values.vault.nodePort }}
       nodePort: {{ .Values.vault.nodePort }}
-{{- end }}
+      {{- end }}
   selector:
     app: {{ template "vault.fullname" . }}
+    release: {{ .Release.Name }}

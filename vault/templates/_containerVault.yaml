@@ -10,25 +10,26 @@ Create helm partial for Vault container
       - IPC_LOCK
   imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
   ports:
-{{- if .Values.vault.enableTLS }}
+  {{- if .Values.vault.enableTLS }}
   - name: https
     containerPort: 443
-{{- else }}
+  {{- else }}
   - name: http
     containerPort: 80
-{{- end }}
+  {{- end }}
   volumeMounts:
   - name: config
     mountPath: /etc/vault/cfg
     readOnly: true
-{{- if .Values.vault.tls.enabled }}
-  - name: vaulttls
-    mountPath: /etc/vault/tls
-{{- end }}
-{{- if .Values.vault.etcdBackend.tls.enabled }}
-  - name: etcdtls
-    mountPath: /etc/etcd/tls
-{{- end }}
+  {{- if .Values.vault.tls.enabled }}
+  - name: vault-tls
+    mountPath: {{ .Values.vault.tls.secret.mountPath }}
+  {{- end }}
+  {{- if .Values.vault.etcdBackend.tls.enabled }}
+  - name: etcd-tls
+    mountPath: {{ .Values.vault.etcdBackend.tls.secret.mountPath }}
+    readOnly: true
+  {{- end }}
   env:
   - name: MY_POD_NAME
     valueFrom:

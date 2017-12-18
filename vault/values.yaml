@@ -35,6 +35,7 @@ vault:
     tls:
       enabled: false
       secret:
+        mountPath: /etc/etcd/tls
         name:
         certFile:
         keyFile:
@@ -44,6 +45,7 @@ vault:
     enabled: false
     secret:
       name:
+      mountPath: /etc/vault/tls
       certFile:
       keyFile:
       caFile:
