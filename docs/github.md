@@ -11,7 +11,7 @@ Within your repository, go to settings and add the following webhooks:
 ### Additional Webhook
 
 * URL should be `jenkinsURL/ghprbhook/` like `https://common-jenkins.kubeme.io/ghprbhook/`
-* Select `Let me select indivdual events` and choose:
+* Select `Let me select individual events` and choose:
   * Issue comment
   * Pull Request
 ![screenshot](images/github/github-selective-webhook.png)
