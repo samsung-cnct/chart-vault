@@ -47,7 +47,7 @@ Create helm partial for Vault container
       value: "{{ .Values.vault.clusterListenerPort }}"
   command: 
     - "/bin/sh"
-    - args: "/vault-bin/vault-start.sh"
+    - "/vault-bin/vault-start.sh"
   resources:
     limits:
       cpu: {{ .Values.vault.cpu }}
