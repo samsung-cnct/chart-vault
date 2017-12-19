@@ -37,8 +37,6 @@ Create helm partial for Vault container
           fieldPath: metadata.name
     - name: SCHEME
       value: "{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}"
-    - name: ADDR
-      value: "${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
     - name: CLIENT_LISTENER_PORT
       value: "{{- if .Values.vault.enableTLS }}443{{- else }}80{{- end}}"
     - name: CLUSTER_LISTENER_PORT
@@ -50,11 +48,12 @@ Create helm partial for Vault container
         # print current environment
         printenv
 
+        ADDR="${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
         VAULT_API_ADDR="$SCHEME://$ADDR:$CLIENT_LISTENER_PORT"
         VAULT_CLUSTER_ADDR="$ADDR:$CLUSTER_LISTENER_PORT"
         TEST="this is a test"
 
-        export VAULT_API_ADDR VAULT_CLUSTER_ADDR TEST
+        export ADDR VAULT_API_ADDR VAULT_CLUSTER_ADDR TEST
 
         cat /etc/vault/cfg/config.hcl
 
