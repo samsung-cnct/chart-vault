@@ -23,6 +23,6 @@ Create helm partial for Vault initialization
       # create secret out of the output.json
       kubectl delete secret {{ template "vault.fullname" . }}-keys --namespace {{ .Release.Namespace }} || true  
       kubectl create secret generic {{ template "vault.fullname" . }}-keys --from-file=./output.json --namespace {{ .Release.Namespace }}
-  command: [ "bin/sh" ]
+  command: [ "/bin/sh" ]
   args: ["-c", *initVault]
 {{- end }}
