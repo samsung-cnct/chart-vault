@@ -39,18 +39,22 @@ Create helm partial for Vault container
       value: "{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}"
     - name: ADDR
       value: "${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
-    - name: PORT
+    - name: CLIENT_LISTENER_PORT
       value: "{{- if .Values.vault.enableTLS }}443{{- else }}80{{- end}}"
-    - name: VAULT_API_ADDR
-      value: "$SCHEME://$ADDR:$PORT"
-    - name: VAULT_CLUSTER_ADDR
-      value: "$ADDR:{{ .Values.vault.clusterListenerPort }}"
+    - name: CLUSTER_LISTENER_PORT
+      value: "{{ .Values.vault.clusterListenerPort }}"
     - name: SCRIPT
       value: &startVault |-
         #!/bin/busybox sh
 
         # print current environment
         printenv
+
+        VAULT_API_ADDR="$SCHEME://$ADDR:$CLIENT_LISTENER_PORT"
+        VAULT_CLUSTER_ADDR="$ADDR:$CLUSTER_LISTENER_PORT"
+        TEST="this is a test"
+
+        export VAULT_API_ADDR VAULT_CLUSTER_ADDR TEST
 
         cat /etc/vault/cfg/config.hcl
 
@@ -63,6 +67,6 @@ Create helm partial for Vault container
     requests:
       cpu: {{ .Values.vault.cpu }}
       memory: {{ .Values.vault.memory }}
-  command: [ "bin/sh" ]
+  command: [ "/bin/sh" ]
   args: ["-c", *startVault]
 {{- end }}
