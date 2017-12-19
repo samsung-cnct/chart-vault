@@ -45,6 +45,9 @@ Create helm partial for Vault container
       value: "{{- if .Values.vault.enableTLS }}443{{- else }}80{{- end}}"
     - name: CLUSTER_LISTENER_PORT
       value: "{{ .Values.vault.clusterListenerPort }}"
+  command: 
+    - "/bin/sh"
+    - args: "/vault-bin/vault-start.sh"
   resources:
     limits:
       cpu: {{ .Values.vault.cpu }}
@@ -52,6 +55,4 @@ Create helm partial for Vault container
     requests:
       cpu: {{ .Values.vault.cpu }}
       memory: {{ .Values.vault.memory }}
-  command: [ "/bin/sh" ]
-  args: "/vault-bin/vault-start.sh"
 {{- end }}
