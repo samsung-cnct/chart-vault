@@ -21,7 +21,7 @@ Create helm partial for Vault container
   - name: config
     mountPath: /etc/vault/cfg
     readOnly: true
-  - name: config
+  - name: startscript
     mountPath: /vault-bin/vault-start.sh
     subPath: vault-start.sh
     readOnly: false
@@ -46,9 +46,13 @@ Create helm partial for Vault container
       value: "{{- if .Values.vault.enableTLS }}443{{- else }}80{{- end}}"
     - name: CLUSTER_LISTENER_PORT
       value: "{{ .Values.vault.clusterListenerPort }}"
-  command: 
-    - "/bin/sh"
-    - "/vault-bin/vault-start.sh"
+    - name: VAULT_ADDR
+      value: "{{ if .Values.vault.enableTLS}}https{{- else}}http{{- end}}://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
+    - name: FQDN
+      value: "{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
+    - name: VAULT_STARTUP_OPTIONS
+      value: "{{- if .Values.vault.enableDebug }}-log-level=debug{{- end }}"
+  command: ["/bin/sh","-c","chmod 755 /vault-bin/vault-start.sh && /vault-bin/vault-start.sh"]
   resources:
     limits:
       cpu: {{ .Values.vault.cpu }}

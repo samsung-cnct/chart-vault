@@ -1,15 +1,16 @@
-#!/bin/busybox sh
+#!/bin/sh
 
-# print current environment
-printenv
-
-ADDR="${MY_POD_NAME}.{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
+ADDR="${MY_POD_NAME}.${FQDN}"
 VAULT_API_ADDR="$SCHEME://$ADDR:$CLIENT_LISTENER_PORT"
 VAULT_CLUSTER_ADDR="$ADDR:$CLUSTER_LISTENER_PORT"
 
 export ADDR VAULT_API_ADDR VAULT_CLUSTER_ADDR
 
+# print current environment
+printenv
+
 cat /etc/vault/cfg/config.hcl
+echo "RUNNING VAULT WITH: vault server -config=/etc/vault/cfg/config.hcl $VAULT_STARTUP_OPTIONS"
 
 # start vault server
-vault server -config=/etc/vault/cfg/config.hcl{{- if .Values.vault.enableDebug }} -log-level=debug{{- end }}
+vault server -config=/etc/vault/cfg/config.hcl $VAULT_STARTUP_OPTIONS

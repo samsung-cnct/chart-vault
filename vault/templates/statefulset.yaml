@@ -27,6 +27,9 @@ spec:
       - name: config
         configMap:
           name: {{ template "vault.fullname" . }}-run
+      - name: startscript
+        configMap:
+          name: {{ template "vault.fullname" . }}-startscript
       {{- if .Values.vault.tls.enabled }}
       - name: vault-tls
         secret:
