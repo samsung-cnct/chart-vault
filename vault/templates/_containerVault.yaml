@@ -40,14 +40,29 @@ Create helm partial for Vault container
       valueFrom:
         fieldRef:
           fieldPath: metadata.name
-    - name: SCHEME
-      value: "{{- if .Values.vault.enableTLS }}https{{- else }}http{{- end }}"
-    - name: CLIENT_LISTENER_PORT
-      value: "{{- if .Values.vault.enableTLS }}443{{- else }}80{{- end}}"
     - name: CLUSTER_LISTENER_PORT
       value: "{{ .Values.vault.clusterListenerPort }}"
+  {{- if .Values.vault.enableTLS }}
+    - name: SCHEME
+      value: "https"
+    - name: CLIENT_LISTENER_PORT
+      value: 443
     - name: VAULT_ADDR
-      value: "{{ if .Values.vault.enableTLS}}https{{- else}}http{{- end}}://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
+      value: "https://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
+    - name: VAULT_CACERT
+      value: "{{ .Values.vault.tls.secret.caFile }}"
+    - name: VAULT_CLIENT_KEY
+      value: "{{ .Values.vault.tls.secret.keyFile }}"
+    - name: VAULT_CLIENT_CERT
+      value: "{{ .Values.vault.tls.secret.certFile }}"
+  {{- else }}
+    - name: SCHEME
+      value: "http"
+    - name: CLIENT_LISTENER_PORT
+      value: 80
+    - name: VAULT_ADDR
+      value: "http://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
+  {{- end }}
     - name: FQDN
       value: "{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
     - name: VAULT_STARTUP_OPTIONS
