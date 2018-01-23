@@ -46,7 +46,7 @@ Create helm partial for Vault container
     - name: SCHEME
       value: "https"
     - name: CLIENT_LISTENER_PORT
-      value: 443
+      value: "443"
     - name: VAULT_ADDR
       value: "https://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
     - name: VAULT_CACERT
@@ -59,7 +59,7 @@ Create helm partial for Vault container
     - name: SCHEME
       value: "http"
     - name: CLIENT_LISTENER_PORT
-      value: 80
+      value: "80"
     - name: VAULT_ADDR
       value: "http://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
   {{- end }}
