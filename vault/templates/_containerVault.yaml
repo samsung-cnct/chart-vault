@@ -50,11 +50,11 @@ Create helm partial for Vault container
     - name: VAULT_ADDR
       value: "https://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
     - name: VAULT_CACERT
-      value: "{{ .Values.vault.tls.secret.caFile }}"
+      value: "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }}"
     - name: VAULT_CLIENT_KEY
-      value: "{{ .Values.vault.tls.secret.keyFile }}"
+      value: "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.keyFile }}"
     - name: VAULT_CLIENT_CERT
-      value: "{{ .Values.vault.tls.secret.certFile }}"
+      value: "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.certFile }}"
   {{- else }}
     - name: SCHEME
       value: "http"
