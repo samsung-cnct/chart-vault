@@ -26,10 +26,10 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: {{ template "vault.fullname" . }}-run
+          name: vault-config
       - name: startscript
         configMap:
-          name: {{ template "vault.fullname" . }}-startscript
+          name: {{ template "vault.name" . }}-startscript
       {{- if .Values.vault.tls.enabled }}
       - name: vault-tls
         secret:
