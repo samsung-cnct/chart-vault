@@ -1,48 +1,30 @@
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: {{ template "vault.fullname" . }}-secret-writer
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  namespace: {{ .Release.Namespace }}
-  name: {{ template "vault.fullname" . }}-secret-writer
-rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["create"]
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: {{ template "vault.fullname" . }}-secret-writer
-  namespace: {{ .Release.Namespace }}
-subjects:
-- kind: ServiceAccount
-  name: {{ template "vault.fullname" . }}-secret-writer
-  namespace: {{ .Release.Namespace }}
-roleRef:
-  kind: Role
-  name: {{ template "vault.fullname" . }}-secret-writer
-  apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "vault.fullname" . }}
+  name: {{ template "vault.name" . }}-initjob
+  labels:
+    app: initjob
 spec:
   template:
     metadata:
-      name: {{ template "vault.fullname" . }}-init
+      name: {{ template "vault.fullname" . }}-initscript
     spec:
       serviceAccountName: {{ template "vault.fullname" . }}-secret-writer
       containers:
       {{ include "containerInitVault" . | indent 6 }}
       volumes:
-      - name: config
+      - name: initpayload
         configMap:
-          name: {{ template "vault.fullname" . }}-config
+          name: vault-init-payload
+      - name: initscript
+        configMap:
+          name: vault-init-run
+      {{- if .Values.vault.tls.enabled }}
+      - name: vault-tls
+        secret:
+          secretName: {{ .Values.vault.tls.secret.name }}
+      {{- end }}
       restartPolicy: Never
   backoffLimit: {{ .Values.vault.initBackoff }}
   activeDeadlineSeconds: {{ .Values.vault.initDeadline }}

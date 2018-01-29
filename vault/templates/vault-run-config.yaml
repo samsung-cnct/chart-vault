@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "vault.fullname" . }}-run
+  name: vault-config
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

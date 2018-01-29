@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "vault.fullname" . }}-config
+  name: vault-init-payload
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -11,8 +11,8 @@ metadata:
 data:
   init.json: |
     {
-      {{ if .Values.vault.pgpKeys }}"pgp_keys": {{ toJson .Values.vault.pgpKeys }},{{ end }}
-      {{ if .Values.vault.rootPgpKey }}"root_token_pgp_key": "{{ .Values.vault.rootPgpKey }}",{{ end }}
-      "secret_shares": {{ .Values.vault.secretShares }},
-      "secret_threshold": {{ .Values.vault.unsealShares }}
+      {{- if .Values.vault.pgpKeys }}"pgp_keys": {{- toJson .Values.vault.pgpKeys }},{{- end }}
+      {{- if .Values.vault.rootPgpKey }}"root_token_pgp_key": "{{- .Values.vault.rootPgpKey }}",{{- end }}
+      "secret_shares": {{- .Values.vault.secretShares }},
+      "secret_threshold": {{- .Values.vault.unsealShares }}
     }

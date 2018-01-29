@@ -1,28 +1,52 @@
 {{/*
-Create helm partial for Vault initialization
+  Create helm partial for Vault initialization
 */}}
+
 {{- define "containerInitVault" }}
 - name: {{ template "vault.fullname" . }}
   image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
   imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
-  volumeMounts:
-  - name: config
-    mountPath: /etc/vault/cfg
-    readOnly: true
   env:
-  - name: SCRIPT
-    value: &initVault |-
-      #!/bin/sh
-
-      # wait for vault to respond with 501 (uninitialized)
-      while [[ "$(curl --connect-timeout 1 -s -o /dev/null -w %{http_code} {{ if .Values.vault.enableTLS }}https{{ else }}http{{ end }}://{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health)" != "501" ]]; do sleep 1; done
-
-      # init with the json payload
-      while [[ "$(curl --connect-timeout 1 -s -o output.json -w %{http_code} --request PUT --data @/etc/vault/cfg/init.json {{ if .Values.vault.enableTLS }}https{{ else }}http{{ end }}://{{ template "vault.fullname" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/init)" != "200" ]]; do sleep 1; done
-
-      # create secret out of the output.json
-      kubectl delete secret {{ template "vault.fullname" . }}-keys --namespace {{ .Release.Namespace }} || true  
-      kubectl create secret generic {{ template "vault.fullname" . }}-keys --from-file=./output.json --namespace {{ .Release.Namespace }}
-  command: [ "/bin/sh" ]
-  args: ["-c", *initVault]
+    - name: MY_POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+  {{- if .Values.vault.tls.enabled }}
+    - name: SCHEME
+      value: "https"
+    - name: CLIENT_LISTENER_PORT
+      value: "443"
+    - name: VAULT_ADDR
+      value: "https://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
+    - name: VAULT_CACERT
+      value: "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }}"
+    - name: VAULT_CLIENT_KEY
+      value: "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.keyFile }}"
+    - name: VAULT_CLIENT_CERT
+      value: "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.certFile }}"
+    - name: VAULT_FULL_URL
+      value: "https://{{ template "vault.external" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
+  {{- else }}
+    - name: SCHEME
+      value: "http"
+    - name: CLIENT_LISTENER_PORT
+      value: "80"
+    - name: VAULT_ADDR
+      value: "http://127.0.0.1:{{ default 8200 .Values.vault.listenerPort }}"
+    - name: VAULT_FULL_URL
+      value: "http://{{ template "vault.external" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}"
+  {{- end }}
+  volumeMounts:
+    - name: initpayload
+      mountPath: /etc/vault/cfg
+      readOnly: false
+    - name: initscript
+      mountPath: /vault-bin/init-vault.sh
+      subPath: init-vault.sh
+  {{- if .Values.vault.tls.enabled }}
+    - name: vault-tls
+      mountPath: {{ .Values.vault.tls.secret.mountPath }}
+      readOnly: true
+  {{- end }}
+  command: ["/bin/sh","-c","chmod 755 /vault-bin/init-vault.sh && /vault-bin/init-vault.sh"]
 {{- end }}

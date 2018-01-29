@@ -13,4 +13,4 @@ cat /etc/vault/cfg/config.hcl
 echo "RUNNING VAULT WITH: vault server -config=/etc/vault/cfg/config.hcl $VAULT_STARTUP_OPTIONS"
 
 # start vault server
-vault server -config=/etc/vault/cfg/config.hcl $VAULT_STARTUP_OPTIONS
+vault server -config=/etc/vault/cfg/config.hcl "$VAULT_STARTUP_OPTIONS"

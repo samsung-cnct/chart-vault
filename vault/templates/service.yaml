@@ -2,7 +2,28 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "vault.fullname" . }}
+  name: {{ template "vault.name" . }}
+  labels:
+    app: {{ template "vault.name" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  ports:
+    - name: clusterlistener
+      protocol: TCP
+      port: {{ .Values.vault.clusterListenerPort }}
+    - name: listener
+      protocol: TCP
+      port: {{ .Values.vault.listenerPort }}
+  clusterIP: None
+  selector:
+    app: {{ template "vault.fullname" . }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vault.external" . }}
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -12,19 +33,12 @@ spec:
   ports:
     - name: client-port-external
       protocol: TCP
-      {{- if .Values.vault.enableTLS }}
+      {{- if .Values.vault.tls.enabled }}
       port: 443
       targetPort: {{ .Values.vault.listenerPort }}
       {{- else }}
       port: 80
       targetPort: {{ .Values.vault.listenerPort }}
       {{- end }}
-    - name: cluster-port
-      protocol: TCP
-      port: {{ .Values.vault.clusterListenerPort }}
-      {{- if .Values.vault.nodePort }}
-      nodePort: {{ .Values.vault.nodePort }}
-      {{- end }}
   selector:
     app: {{ template "vault.fullname" . }}
-    release: {{ .Release.Name }}
