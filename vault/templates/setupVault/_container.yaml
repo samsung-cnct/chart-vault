@@ -1,0 +1,149 @@
+{{/*
+Create helm partial for Vault initialization
+*/}}
+{{- define "containerSetupVault" }}
+- name: setup-vault
+  image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+  imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
+  {{- if .Values.vault.tls.enabled }}
+  volumeMounts:
+  - name: vault-tls-data
+    mountPath: {{ .Values.vault.tls.secret.mountPath }}
+    readOnly: true
+  {{- end }}
+  env:
+  - name: SCRIPT
+    value: &setupVault |-
+      #!/bin/sh
+      {{- if not .Values.vault.setup.unseal }}
+        echo "Skipping setup since vault is not setup to be unsealed on startup"
+        exit 0;
+      {{- end }}
+
+      {{- if .Values.vault.rootPgpKey }}
+        echo "Skipping setup since root token is setup to be PGP-encrypted"
+        exit 0;
+      {{- end}}
+
+      {{- if .Values.vault.pgpKeys }}
+        echo "Skipping setup master key shards are setup to be PGP-encrypted"
+        exit 0;
+      {{- end }}
+
+      printenv
+      echo "Setting up vault"
+
+      EMPTY_BODY=204
+
+      # get the root token
+      rootToken=$(kubectl get secret {{ .Values.vault.setup.masterSecret | default (include "vault.name" .) }} -o json --namespace {{ .Release.Namespace }} | jq --raw-output '.data."unseal.json"' | base64 --decode | jq -r ".root_token")
+
+      # setup auth backends
+      echo "Setting up auth backends"
+
+      {{- range $key, $val := .Values.vault.backends.auth }}
+      echo "Setting up auth backend {{ $key }}"
+      {{ if $.Values.vault.tls.enabled }}
+        curl --connect-timeout 1 \
+          -s -o /dev/null \
+          --cert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.keyFile }} \
+          --key-type PEM \
+          --cacert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.caFile }} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request DELETE \
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
+        healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          -w %{http_code} \
+          --cert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.keyFile }} \
+          --key-type PEM \
+          --cacert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.caFile }} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ . | toJson | quote }} \
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
+        {{- else }}
+        curl --connect-timeout 1 \
+          -s -o /dev/null \
+          -w %{http_code} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request DELETE \
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
+        healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ . | toJson | quote }} \
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
+        {{- end }}
+
+        if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
+          echo "Auth enable call for backend '{{ $key }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
+          exit 1;
+        fi
+      {{- end }}
+
+      # setup secret backends
+      echo "Setting up secrets backends"
+
+      {{- range $key, $val := .Values.vault.backends.secrets }}
+      echo "Setting up secret backend {{ $key }}"
+      {{ if $.Values.vault.tls.enabled }}
+        curl --connect-timeout 1 \
+          -s -o /dev/null \
+          --cert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.keyFile }} \
+          --key-type PEM \
+          --cacert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.caFile }} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request DELETE \
+          --data {{ . | toJson | quote }} \
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
+        healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          -w %{http_code} \
+          --cert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.keyFile }} \
+          --key-type PEM \
+          --cacert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.caFile }} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ . | toJson | quote }} \
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
+        {{- else }}
+        curl --connect-timeout 1 \
+          -s -o /dev/null \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request DELETE \
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
+        healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          -w %{http_code} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ . | toJson | quote }} \
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
+        {{- end }}
+
+        if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
+          echo "Secret enable call for backend '{{ $key }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
+          exit 1;
+        fi
+      {{- end }}
+  command: [ "/bin/sh" ]
+  args: ["-c", *setupVault]
+{{- end }}
