@@ -106,7 +106,7 @@ To use the script, export the following environment variables:
 | --- | --- | ---- |
 | GEN_NAMESPACE | Release namespace  | "default" | 
 | GEN_CLIENT_SECRET_NAME | client tls secret name to create  | "vault-client-tls" | 
-| GEN_STATEFULSET_NAME | Name of the stateful set to be created by chart (release name)  | "vault" | 
+| GEN_STATEFULSET_NAME_VAULT | Name of the stateful set to be created by chart (release name)  | "vault" | 
 | GEN_NAMESPACE | Release namespace  | "default" | 
 | GEN_ACCESS_SERVICE_NAME | Name of the loadbalancing service (Release Name - access) | "access-vault" |
 | GEN_IDENTITY_SERVICE_NAME | Headless service name (Release Name) | "vault" |
