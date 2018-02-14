@@ -193,7 +193,7 @@ Will result in an [AppRole](https://www.vaultproject.io/api/auth/approle/index.h
 | --- | --- | ---- |
 | vault.backends.secrets | Dictionary of vault secrets backend objects | N/A |
 
-Dictionary key is used as a mount point. Value is a dictionary of [secrets backend mount parameters](https://www.vaultproject.io/api/system/mounts.html). For example:
+Dictionary key is used as a mount point. Value is a dictionary of [secrets backend mount parameters](https://www.vaultproject.io/api/system/mounts.html):
 
 ```
 backends:
