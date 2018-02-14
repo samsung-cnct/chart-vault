@@ -74,9 +74,13 @@ To learn more about the release, try:
 
 ### Automatically initializing and unsealing
 
-Chart can automatically initialize and unseal Vault on deployment. This will result in a cluster secret being created with all of the master unseal key shards and root access token. Security concerns apply. 
+*THIS FUNCTIONALITY IS NOT RECOMMENDED FOR PRODUCTION USE!*  
 
-As a compromise you can set the chart to auto-initialize, but also provide `vault.pgpKeys` and `vault.rootPgpKey` parameters, in which case the resulting unseal secret will be encrypted with the provided keys. This makes auto-unsealing impossible however.  
+Chart can automatically initialize and unseal Vault on deployment. This will result in a cluster secret being created with all of the master unseal key shards and root access token. 
+
+As a compromise you can set the chart to auto-initialize, but also provide `vault.pgpKeys` and `vault.rootPgpKey` parameters, in which case the resulting unseal secret will be encrypted with the provided keys. This makes auto-unsealing impossible however. 
+
+Note that unseal `vault.setup.masterSecret` secret will remain in the helm release namespace until deleted manually.
 
 
 | Parameter | Description | Default|
