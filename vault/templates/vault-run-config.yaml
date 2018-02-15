@@ -2,7 +2,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: vault-config
+  name: {{ template "vault.name" . }}-run
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
@@ -25,9 +25,9 @@ data:
 
       {{- if .Values.vault.etcdBackend.tls.enabled }}
           address = "https://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
-          tls_ca_file = "/etc/etcd/tls/{{ .Values.vault.etcdBackend.tls.secret.caFile }}"
-          tls_cert_file = "/etc/etcd/tls/{{ .Values.vault.etcdBackend.tls.secret.certFile }}"
-          tls_key_file = "/etc/etcd/tls/{{ .Values.vault.etcdBackend.tls.secret.keyFile }}"
+          tls_ca_file = "{{ .Values.vault.etcdBackend.tls.secret.mountPath }}/{{ .Values.vault.etcdBackend.tls.secret.caFile }}"
+          tls_cert_file = "{{ .Values.vault.etcdBackend.tls.secret.mountPath }}/{{ .Values.vault.etcdBackend.tls.secret.certFile }}"
+          tls_key_file = "{{ .Values.vault.etcdBackend.tls.secret.mountPath }}/{{ .Values.vault.etcdBackend.tls.secret.keyFile }}"
       {{- else }}
           address = "http://{{ .Values.vault.etcdBackend.address }}:{{ .Values.vault.etcdBackend.port }}"
       {{- end }}
@@ -39,10 +39,10 @@ data:
           ha_enabled = "false"
       {{- end }}
           
-          path = {{ default (print .Release.Namespace "/" .Release.Name "/" ) .Values.vault.etcdBackend.path | quote }}  
-          sync = {{ default "false" .Values.vault.etcdBackend.sync | quote }}
-          username = {{ default "" .Values.vault.etcdBackend.username | quote }}
-          password = {{ default "" .Values.vault.etcdBackend.password | quote }}
+          path = {{ .Values.vault.etcdBackend.path | default (print .Release.Namespace "/" .Release.Name "/" ) | quote }}  
+          sync = {{ .Values.vault.etcdBackend.sync | default "false"  | quote }}
+          username = {{ .Values.vault.etcdBackend.username | default "" | quote }}
+          password = {{ .Values.vault.etcdBackend.password | default "" | quote }}
       }
     {{- end }}
 
@@ -50,12 +50,12 @@ data:
         address = "0.0.0.0:{{ .Values.vault.listenerPort }}"
         cluster_address = "0.0.0.0:{{ .Values.vault.clusterListenerPort }}"
     {{- if .Values.vault.tls.enabled }}
-        tls_key_file = "/etc/vault/tls/{{ .Values.vault.tls.secret.keyFile }}"
-        tls_cert_file = "/etc/vault/tls/{{ .Values.vault.tls.secret.certFile }}"
-        tls_client_ca_file = "/etc/vault/tls/{{ .Values.vault.tls.secret.caFile }}"
-    {{- else}}
+        tls_key_file = "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.keyFile }}"
+        tls_cert_file = "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.certFile }}"
+        tls_client_ca_file = "{{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }}"
+    {{- else }}
         tls_disable = "true"
-    {{- end}}
+    {{- end }}
       }
 
       disable_mlock = false

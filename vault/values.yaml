@@ -1,17 +1,14 @@
 ---
 clusterDomain: cluster.local
 vault:
-  image: "quay.io/samsung_cnct/vault"
-  imageTag: "0.9.0"
+  image: quay.io/samsung_cnct/vault
+  imageTag: v0.9.3
   imagePullPolicy: "Always"
-  component: "vault"
-  nodePort:
   listenerPort: 8200
   clusterListenerPort: 8201
 # Valid choices are [etcd, inmem]
   backend: "etcd"
-  enableTLS: false
-  enableDebug: true
+  enableDebug: false
   replicas: 3
   secretShares: 5
   unsealShares: 3
@@ -21,7 +18,13 @@ vault:
   rootPgpKey: 
   cpu: "500m"
   memory: "200Mi"
+  # init and unseal vault as it comes up. Store unseal keys and root token in a secret
+  setup: 
+    init: false
+    unseal: false
+    masterSecret: 
 # etcd
+  etcdSetupEnabled: false
   etcdBackend:
     discoverySRV:
     address: "vault-etcd-vault-etcd.vault-etcd-staging"
@@ -44,11 +47,11 @@ vault:
   tls:
     enabled: false
     secret:
-      name:
+      name: vault-client-tls
       mountPath: /etc/vault/tls
-      certFile:
-      keyFile:
-      caFile:
+      certFile: ca.pem
+      keyFile: vault-client.pem
+      caFile: vault-client-key.pem
   tolerations:
    # - key: taintKey
    #   value: taintValue
@@ -62,4 +65,3 @@ vault:
         # - key: iamalabelkey
         #   operator: In
         #   values: ["value1", "value2"]
-

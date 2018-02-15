@@ -1,40 +1,39 @@
 ---
-apiVersion: apps/v1beta2
+apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
-  name: {{ template "vault.fullname" . }}
+  name: {{ template "vault.name" . }}
   labels:
     app: {{ template "vault.name" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 spec:
-  serviceName: {{ template "vault.fullname" . }}
+  serviceName: {{ template "vault.name" . }}
   replicas: {{ .Values.vault.replicas }}
   selector:
     matchLabels:
-      app: {{ template "vault.fullname" . }}
+      app: {{ template "vault.name" . }}
   template:
     metadata:
       labels:
-        app: {{ template "vault.fullname" . }}
+        app: {{ template "vault.name" . }}
     spec:
       nodeSelector:
         nodepool: clusterNodes
       containers:
       {{ include "containerVault" . | indent 6 }}
+      initContainers:
+      {{ include "containerWaitEtcd" . | indent 6 }}
       volumes:
-      - name: config
-        configMap:
-          name: vault-config
-      - name: startscript
-        configMap:
-          name: {{ template "vault.name" . }}-startscript
       {{- if .Values.vault.tls.enabled }}
-      - name: vault-tls
+      - name: vault-tls-data
         secret:
           secretName: {{ .Values.vault.tls.secret.name }}
       {{- end }}
+      - name: config
+        configMap:
+          name: {{ template "vault.name" . }}-run
       {{- if .Values.vault.etcdBackend.tls.enabled }}
       - name: etcd-tls
         secret:
