@@ -41,6 +41,7 @@ Create helm partial for Vault initialization
       # setup auth backends
       echo "Setting up auth backends"
 
+      {{- if .Values.vault.backends }}
       {{- range $key, $val := .Values.vault.backends.auth }}
       echo "Setting up auth backend {{ $key }}"
       {{ if $.Values.vault.tls.enabled }}
@@ -143,6 +144,7 @@ Create helm partial for Vault initialization
           echo "Secret enable call for backend '{{ $key }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
           exit 1;
         fi
+      {{- end }}
       {{- end }}
   command: [ "/bin/sh" ]
   args: ["-c", *setupVault]
