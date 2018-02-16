@@ -1,24 +1,16 @@
 {{/* vim: set filetype=mustache: */}}
 {{/*
-Expand the name of the chart.
-*/}}
-{{- define "vault.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
-{{/*
-Create a default fully qualified app name.
+Create a name for vault dns.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "vault.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- define "vault.name" -}}
+{{- printf "%s" .Release.Name | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
 {{/*
 Create a name for vault dns.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
-{{- define "vault.external" -}}
-{{- printf "%s-%s" .Release.Name "external" | trunc 63 | trimSuffix "-" -}}
+{{- define "vault.access" -}}
+{{- printf "%s-%s" .Release.Name "access" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}

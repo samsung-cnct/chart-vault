@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/sh -ex
 
 # Our helm charts have the version format 'x.y.z-a', where a is the number of commits since the last tagged version.
 # A tagged version's 'a' will be 0.
@@ -14,3 +14,10 @@ fi
 
 CHART_VER=${CHART_VER:-0.0.1} CHART_REL=${CHART_REL:-0} \
     envsubst < build/Chart.yaml.in > ${CHART_NAME}/Chart.yaml
+
+# pull app registry dependencies
+cd ${CHART_NAME}
+helm registry dep --overwrite
+
+# build helm dependencies
+helm dep build

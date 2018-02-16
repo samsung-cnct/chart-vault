@@ -1,0 +1,108 @@
+{{/*
+Create helm partial for Vault initialization
+*/}}
+{{- define "containerInitVault" }}
+- name: init-vault
+  image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+  imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
+  volumeMounts:
+  - name: config
+    mountPath: /etc/vault/cfg
+    readOnly: true
+  {{- if .Values.vault.tls.enabled }}
+  - name: vault-tls-data
+    mountPath: {{ .Values.vault.tls.secret.mountPath }}
+    readOnly: true
+  {{- end }}
+  env:
+  - name: SCRIPT
+    value: &initVault |-
+      #!/bin/sh
+
+      printenv
+
+      INITIALIZED_UNSEALED_ACTIVE=200
+      OK=200
+      INVALID=0
+      UNSEALED_STANDBY=429
+      DATA_RECOVERY=472
+      UNINITIALIZED=501
+      INITIALIZED_AND_SEALED=503
+
+      # Get initial health code
+      healthCode={INVALID}
+
+      echo "Getting health code"
+      until [ ${healthCode} -gt ${INVALID} ]; do
+        {{ if .Values.vault.tls.enabled }}
+        healthCode=$(curl --connect-timeout 1 \
+          -o /dev/null \
+          -w %{http_code} \
+          --cert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.keyFile }} \
+          --key-type PEM \
+          --cacert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }} \
+          --location \
+            https://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health)
+        {{- else }}
+        healthCode=$(curl --connect-timeout 1 \
+          -o /dev/null \
+          -w %{http_code} \
+          --location \
+            http://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health)
+        {{- end }}
+
+        # sleep for a 3 sec if failed
+        if [ ${healthCode} -eq ${INVALID} ]; then
+          echo "Will retry, result is ${healthCode}"
+          sleep 3;
+        fi
+      done
+
+      if [ ${healthCode} -ne ${UNINITIALIZED} ]; then
+        echo "Vault is not un-initialized (501), got ${healthCode} - exiting"
+        exit 0;
+      fi
+
+      # if health code is UNINITIALIZED, perform init (only needs to be done for one replica)
+      echo "Health code is ${healthCode}, will attempt init"
+
+      until [ ${healthCode} -eq ${OK} ]; do
+        {{ if .Values.vault.tls.enabled }}
+        healthCode=$(curl --connect-timeout 1 \
+          -o unseal.json \
+          -w %{http_code} \
+          --request PUT \
+          --data @/etc/vault/cfg/init.json \
+          --cert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.keyFile }} \
+          --key-type PEM --cacert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }} \
+          --location \
+            https://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/init)
+        {{- else }}
+        healthCode=$(curl --connect-timeout 1 \
+          -o unseal.json \
+          -w %{http_code} \
+          --request PUT \
+          --location \
+          --data @/etc/vault/cfg/init.json \
+            http://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/init)
+        {{- end }}
+
+        # sleep for a 3 sec if failed
+        echo "Will retry, result is ${healthCode}"
+        if [ ${healthCode} -ne ${OK} ]; then
+          sleep 3;
+        fi
+      done
+
+      # if initialized, save the resulting json as a secret
+      echo "Init result is ${healthCode}, creating unseal secret."
+
+      kubectl delete secret {{ .Values.vault.setup.masterSecret | default (include "vault.name" .) }} --namespace {{ .Release.Namespace }} || true
+      kubectl create secret generic {{ .Values.vault.setup.masterSecret | default (include "vault.name" .) }} --from-file=./unseal.json --namespace {{ .Release.Namespace }}
+  command: [ "/bin/sh" ]
+  args: ["-c", *initVault]
+{{- end }}

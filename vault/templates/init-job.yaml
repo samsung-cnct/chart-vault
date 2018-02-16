@@ -2,26 +2,28 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "vault.name" . }}-initjob
-  labels:
-    app: initjob
+  name: {{ template "vault.name" . }}-init
 spec:
   template:
     metadata:
-      name: {{ template "vault.fullname" . }}-initscript
+      name: {{ template "vault.name" . }}-init
     spec:
-      serviceAccountName: {{ template "vault.fullname" . }}-secret-writer
+      serviceAccountName: {{ template "vault.name" . }}-secret-rw
+      initContainers:
+      {{- if .Values.vault.setup.init }}
+      {{ include "containerInitVault" . | indent 6 }}  
+      {{- end }}
+      {{- if and .Values.vault.setup.unseal }}
+      {{ include "containerUnsealVault" . | indent 6 }}  
+      {{- end }}
       containers:
-      {{ include "containerInitVault" . | indent 6 }}
+      {{ include "containerSetupVault" . | indent 6 }}  
       volumes:
-      - name: initpayload
+      - name: config
         configMap:
-          name: vault-init-payload
-      - name: initscript
-        configMap:
-          name: vault-init-run
+          name: {{ template "vault.name" . }}-config
       {{- if .Values.vault.tls.enabled }}
-      - name: vault-tls
+      - name: vault-tls-data
         secret:
           secretName: {{ .Values.vault.tls.secret.name }}
       {{- end }}
