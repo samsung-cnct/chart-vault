@@ -19,8 +19,6 @@ spec:
       labels:
         app: {{ template "vault.name" . }}
     spec:
-      nodeSelector:
-        nodepool: clusterNodes
       containers:
       {{ include "containerVault" . | indent 6 }}
       initContainers:
