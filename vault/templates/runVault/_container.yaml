@@ -14,6 +14,17 @@ Create helm partial for Vault container
     containerPort: {{ .Values.vault.listenerPort }}
   - name: clusterlistener
     containerPort: {{ .Values.vault.clusterListenerPort }}
+  readinessProbe:
+    httpGet:
+  {{- if .Values.vault.etcdBackend.tls.enabled }}
+      scheme: https
+  {{- else }}
+      scheme: http
+  {{- end }}
+      path: /v1/sys/health?standbyok=true&activecode=200
+      port: {{ .Values.vault.listenerPort }}
+    initialDelaySeconds: 5
+    periodSeconds: 5
   volumeMounts:
   - name: config
     mountPath: /etc/vault/cfg
