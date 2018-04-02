@@ -20,7 +20,9 @@ spec:
         app: {{ template "vault.name" . }}
     spec:
       nodeSelector:
-        nodepool: clusterNodes
+      {{- if .Values.vault.nodePool }}
+        nodepool: {{ .Values.vault.nodePool | quote }}
+      {{- end }}
       containers:
       {{ include "containerVault" . | indent 6 }}
       initContainers:
