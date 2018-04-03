@@ -19,6 +19,10 @@ spec:
       labels:
         app: {{ template "vault.name" . }}
     spec:
+      {{- if .Values.vault.nodePool }}
+      nodeSelector:
+        nodepool: {{ .Values.vault.nodePool | quote }}
+      {{- end }}
       containers:
       {{ include "containerVault" . | indent 6 }}
       initContainers:

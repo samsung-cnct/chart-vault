@@ -4,6 +4,9 @@ vault:
   image: quay.io/samsung_cnct/vault
   imageTag: v0.9.3
   imagePullPolicy: "Always"
+  component: "vault"
+  nodePort:
+  nodePool: 
   listenerPort: 8200
   clusterListenerPort: 8201
 # Valid choices are [etcd, inmem]
