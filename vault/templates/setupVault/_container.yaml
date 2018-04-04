@@ -146,6 +146,41 @@ Create helm partial for Vault initialization
         fi
       {{- end }}
       {{- end }}
+
+      {{- if .Values.vault.secrets }}
+      {{- range .Values.vault.secrets }}
+      {{ if $.Values.vault.tls.enabled }}
+      healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          -w %{http_code} \
+          --cert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.keyFile }} \
+          --key-type PEM \
+          --cacert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.caFile }} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ .values | toJson | quote }} \
+          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/{{ .path }})
+      {{- else }}
+      healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          -w %{http_code} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ .values | toJson | quote }} \
+            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/{{ .path }})
+      {{- end }}
+
+      if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
+        echo "Writing secret '{{ .path }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
+        exit 1;
+      fi
+
+      {{- end }} 
+      {{- end }}
   command: [ "/bin/sh" ]
   args: ["-c", *setupVault]
 {{- end }}
