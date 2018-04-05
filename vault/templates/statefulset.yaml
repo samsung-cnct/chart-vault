@@ -11,6 +11,7 @@ metadata:
 spec:
   serviceName: {{ template "vault.name" . }}
   replicas: {{ .Values.vault.replicas }}
+  podManagementPolicy: Parallel
   selector:
     matchLabels:
       app: {{ template "vault.name" . }}
@@ -19,8 +20,8 @@ spec:
       labels:
         app: {{ template "vault.name" . }}
     spec:
-      nodeSelector:
       {{- if .Values.vault.nodePool }}
+      nodeSelector:
         nodepool: {{ .Values.vault.nodePool | quote }}
       {{- end }}
       containers:
