@@ -17,9 +17,9 @@ Create helm partial for Vault container
   readinessProbe:
     httpGet:
   {{- if .Values.vault.etcdBackend.tls.enabled }}
-      scheme: https
+      scheme: HTTPS
   {{- else }}
-      scheme: http
+      scheme: HTTP
   {{- end }}
       path: /v1/sys/health?standbyok=true&activecode=200
       port: {{ .Values.vault.listenerPort }}
