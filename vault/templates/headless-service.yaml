@@ -17,13 +17,7 @@ spec:
       port: {{ .Values.vault.clusterListenerPort }}
     - name: listener
       protocol: TCP
-      {{- if .Values.vault.tls.enabled }}
-      port: 443
-      targetPort: {{ .Values.vault.listenerPort }}
-      {{- else }}
-      port: 80
-      targetPort: {{ .Values.vault.listenerPort }}
-      {{- end }}
+      port: {{ .Values.vault.listenerPort }}
   clusterIP: None
   selector:
     app: {{ template "vault.name" . }}

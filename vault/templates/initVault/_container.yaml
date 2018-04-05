@@ -44,13 +44,13 @@ Create helm partial for Vault initialization
           --key-type PEM \
           --cacert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }} \
           --location \
-            https://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health)
+            https://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}/v1/sys/health)
         {{- else }}
         healthCode=$(curl --connect-timeout 1 \
           -o /dev/null \
           -w %{http_code} \
           --location \
-            http://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health)
+            http://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}/v1/sys/health)
         {{- end }}
 
         # sleep for a 3 sec if failed
@@ -80,7 +80,7 @@ Create helm partial for Vault initialization
           --key {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.keyFile }} \
           --key-type PEM --cacert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }} \
           --location \
-            https://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/init)
+            https://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}/v1/sys/init)
         {{- else }}
         healthCode=$(curl --connect-timeout 1 \
           -o unseal.json \
@@ -88,7 +88,7 @@ Create helm partial for Vault initialization
           --request PUT \
           --location \
           --data @/etc/vault/cfg/init.json \
-            http://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/init)
+            http://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}/v1/sys/init)
         {{- end }}
 
         # sleep for a 3 sec if failed
