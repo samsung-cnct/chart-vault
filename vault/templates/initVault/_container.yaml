@@ -30,7 +30,7 @@ Create helm partial for Vault initialization
       INITIALIZED_AND_SEALED=503
 
       # Get initial health code
-      healthCode={INVALID}
+      healthCode=${INVALID}
 
       echo "Getting health code"
       until [ ${healthCode} -gt ${INVALID} ]; do
