@@ -146,13 +146,13 @@ Create helm partial for Vault initialization
           --key-type PEM \
           --cacert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }} \
           --location \
-            https://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}/v1/sys/health)
+            https://{{ template "vault.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}:{{ .Values.vault.listenerPort }}/v1/sys/health?standbyok=true&activecode=200)
         {{- else }}
           healthCode=$(curl --connect-timeout 1 \
             -s -o /dev/null \
             -w %{http_code} \
             --location \
-              https://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health)
+              https://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health?standbyok=true&activecode=200)
         {{- end }}
 
         # sleep for a 3 sec if failed
