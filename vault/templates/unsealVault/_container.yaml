@@ -32,7 +32,7 @@ Create helm partial for Vault initialization
       INVALID=0
       DATA_RECOVERY=472
       UNINITIALIZED=501
-      INITIALIZED_AND_SEALED=503
+      INITIALIZED_AND_SEALED=503   
 
       # Get initial health code
       healthCode=0
@@ -73,6 +73,15 @@ Create helm partial for Vault initialization
       # if health code is INITIALIZED_AND_SEALED, perform unseal for each of the vault pods
       echo "Got health code ${healthCode}, proceeding with unseal."
 
+      # check for the unseal secret
+      echo "Checking if unseal secret is present"
+      if kubectl get secret {{ $.Values.vault.setup.masterSecret | default (include "vault.name" $ ) }} --namespace  {{ $.Release.Namespace }} ; then
+        echo "Found {{ $.Values.vault.setup.masterSecret | default (include "vault.name" $ ) }} in {{ $.Release.Namespace }}"
+      else
+        echo "Could not find {{ $.Values.vault.setup.masterSecret | default (include "vault.name" $ ) }} in {{ $.Release.Namespace }}! Exiting."
+        echo "Vault will not be unsealed!"
+        exit 0;
+      fi
 
       # for each vault pod, wait for it to fully come up, then run an unseal, 'unsealShares' number of times
       {{- range $podNum, $p := until (int .Values.vault.replicas) }}

@@ -33,6 +33,16 @@ Create helm partial for Vault initialization
       printenv
       echo "Setting up vault"
 
+      # check for the unseal secret
+      echo "Checking if unseal secret is present"
+      if kubectl get secret {{ $.Values.vault.setup.masterSecret | default (include "vault.name" . ) }} --namespace  {{ .Release.Namespace }} ; then
+        echo "Found {{ .Values.vault.setup.masterSecret | default (include "vault.name" . ) }} in {{ .Release.Namespace }}"
+      else
+        echo "Could not find {{ .Values.vault.setup.masterSecret | default (include "vault.name" . ) }} in {{ .Release.Namespace }}! Exiting."
+        echo "Vault will not be setup!"
+        exit 0;
+      fi
+
       EMPTY_BODY=204
 
       # get the root token
