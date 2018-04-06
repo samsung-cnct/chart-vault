@@ -65,7 +65,7 @@ Create helm partial for Vault initialization
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request DELETE \
-          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
+          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           -w %{http_code} \
@@ -78,7 +78,7 @@ Create helm partial for Vault initialization
           --location \
           --request POST \
           --data {{ . | toJson | quote }} \
-          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
+          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
         {{- else }}
         curl --connect-timeout 1 \
           -s -o /dev/null \
@@ -86,14 +86,14 @@ Create helm partial for Vault initialization
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request DELETE \
-            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
+            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request POST \
           --data {{ . | toJson | quote }} \
-            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
+            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
         {{- end }}
 
         if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
@@ -119,7 +119,7 @@ Create helm partial for Vault initialization
           --location \
           --request DELETE \
           --data {{ . | toJson | quote }} \
-          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
+          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           -w %{http_code} \
@@ -132,14 +132,14 @@ Create helm partial for Vault initialization
           --location \
           --request POST \
           --data {{ . | toJson | quote }} \
-          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
+          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
         {{- else }}
         curl --connect-timeout 1 \
           -s -o /dev/null \
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request DELETE \
-            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
+            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           -w %{http_code} \
@@ -147,7 +147,7 @@ Create helm partial for Vault initialization
           --location \
           --request POST \
           --data {{ . | toJson | quote }} \
-            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
+            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
         {{- end }}
 
         if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
