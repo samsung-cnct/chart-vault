@@ -33,6 +33,16 @@ Create helm partial for Vault initialization
       printenv
       echo "Setting up vault"
 
+      # check for the unseal secret
+      echo "Checking if unseal secret is present"
+      if kubectl get secret {{ $.Values.vault.setup.masterSecret | default (include "vault.name" . ) }} --namespace  {{ .Release.Namespace }} ; then
+        echo "Found {{ .Values.vault.setup.masterSecret | default (include "vault.name" . ) }} in {{ .Release.Namespace }}"
+      else
+        echo "Could not find {{ .Values.vault.setup.masterSecret | default (include "vault.name" . ) }} in {{ .Release.Namespace }}! Exiting."
+        echo "Vault will not be setup!"
+        exit 0;
+      fi
+
       EMPTY_BODY=204
 
       # get the root token
@@ -148,6 +158,9 @@ Create helm partial for Vault initialization
       {{- end }}
 
       {{- if .Values.vault.secrets }}
+      # setup secrets
+      echo "Setting up secret values"
+
       {{- range .Values.vault.secrets }}
       {{ if $.Values.vault.tls.enabled }}
       healthCode=$(curl --connect-timeout 1 \
@@ -162,7 +175,7 @@ Create helm partial for Vault initialization
           --location \
           --request POST \
           --data {{ .values | toJson | quote }} \
-          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/{{ .path }})
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/{{ .path }})
       {{- else }}
       healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
@@ -171,7 +184,7 @@ Create helm partial for Vault initialization
           --location \
           --request POST \
           --data {{ .values | toJson | quote }} \
-            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/{{ .path }})
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/{{ .path }})
       {{- end }}
 
       if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
