@@ -46,17 +46,21 @@ vault:
   backends:
     auth:
       approle:
-        type: approle
-        description: AppRole Auth backend
-        config:
-          plugin_name: ""
-          local: false
+        enable: 
+          type: approle
+          description: AppRole Auth backend
+          config:
+            plugin_name: ""
+            local: false
       kubernetes:
-        type: kubernetes
-        description: Kubernetes Auth backend
-        config:
-          plugin_name: ""
-          local: false
+        enable: 
+          type: kubernetes
+          description: Kubernetes Auth backend
+          config:
+            plugin_name: ""
+            local: false
+        configure:
+          kubernetes_host: https://kubernetes.default.svc.cluster.local
     secrets:
       kv:
         type: kv
