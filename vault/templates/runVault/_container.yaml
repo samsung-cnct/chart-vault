@@ -16,7 +16,7 @@ Create helm partial for Vault container
     containerPort: {{ .Values.vault.clusterListenerPort }}
   readinessProbe:
     httpGet:
-  {{- if .Values.vault.etcdBackend.tls.enabled }}
+  {{- if .Values.vault.tls.enabled }}
       scheme: HTTPS
   {{- else }}
       scheme: HTTP
