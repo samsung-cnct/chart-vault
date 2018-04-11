@@ -161,7 +161,7 @@ Create helm partial for Vault initialization
             -s -o /dev/null \
             -w %{http_code} \
             --location \
-              https://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health?standbyok=true&activecode=200)
+              http://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}/v1/sys/health?standbyok=true&activecode=200)
         {{- end }}
 
         # sleep for a 3 sec if failed
