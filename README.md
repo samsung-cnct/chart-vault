@@ -181,12 +181,16 @@ Dictionary key is used as a mount point. Value is a dictionary of [auth backend 
 ```
 backends:
   auth:
-    approle:
-      type: approle
-      description: AppRole Auth backend
-      config:
-        plugin_name: ""
-        local: false
+    github:
+      configure:
+        organization: samsung-cnct
+      enable: 
+        type: github
+        description: GitHub Auth backend
+        config:
+          plugin_name: ""
+          local: false
+        
 ```
 
 Will result in an [AppRole](https://www.vaultproject.io/api/auth/approle/index.html) backend to be mounted at `/sys/auth/approle'

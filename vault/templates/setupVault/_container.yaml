@@ -65,7 +65,7 @@ Create helm partial for Vault initialization
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request DELETE \
-          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           -w %{http_code} \
@@ -77,29 +77,70 @@ Create helm partial for Vault initialization
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request POST \
-          --data {{ . | toJson | quote }} \
-          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
-        {{- else }}
+          --data {{ .enable | toJson | quote }} \
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
+          
+        if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
+          echo "Auth enable call for backend '{{ $key }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
+          exit 1;
+        fi
+
+        {{- if .configure }}
+        healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          -w %{http_code} \
+          --cert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.certFile }} \
+          --cert-type PEM \
+          --key {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.keyFile }} \
+          --key-type PEM \
+          --cacert {{ $.Values.vault.tls.secret.mountPath }}/{{ $.Values.vault.tls.secret.caFile }} \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ .configure | toJson | quote }} \
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }}/config)
+        
+        if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
+          echo "Auth configure call for backend '{{ $key }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
+          exit 1;
+        fi
+        {{- end }}
+      {{- else }}
         curl --connect-timeout 1 \
           -s -o /dev/null \
           -w %{http_code} \
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request DELETE \
-            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request POST \
-          --data {{ . | toJson | quote }} \
-            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
-        {{- end }}
-
+          --data {{ .enable | toJson | quote }} \
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }})
+        
         if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
           echo "Auth enable call for backend '{{ $key }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
           exit 1;
         fi
+
+        {{- if .configure }}
+        healthCode=$(curl --connect-timeout 1 \
+          -s -o /dev/null \
+          --header "X-Vault-Token: ${rootToken}" \
+          --location \
+          --request POST \
+          --data {{ .configure | toJson | quote }} \
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/auth/{{ $key }}/config)
+        
+        if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
+          echo "Auth configure call for backend '{{ $key }}' did not return '${EMPTY_BODY}' - Got ${healthCode} !"
+          exit 1;
+        fi
+        {{- end }}
+      {{- end }}
       {{- end }}
 
       # setup secret backends
@@ -119,7 +160,7 @@ Create helm partial for Vault initialization
           --location \
           --request DELETE \
           --data {{ . | toJson | quote }} \
-          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           -w %{http_code} \
@@ -132,14 +173,14 @@ Create helm partial for Vault initialization
           --location \
           --request POST \
           --data {{ . | toJson | quote }} \
-          https://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
+          https://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
         {{- else }}
         curl --connect-timeout 1 \
           -s -o /dev/null \
           --header "X-Vault-Token: ${rootToken}" \
           --location \
           --request DELETE \
-            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }} || true
         healthCode=$(curl --connect-timeout 1 \
           -s -o /dev/null \
           -w %{http_code} \
@@ -147,7 +188,7 @@ Create helm partial for Vault initialization
           --location \
           --request POST \
           --data {{ . | toJson | quote }} \
-            http://{{ template "vault.name" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
+            http://{{ template "vault.access" $ }}.{{ $.Release.Namespace }}.svc.{{ $.Values.clusterDomain }}/v1/sys/mounts/{{ $key }})
         {{- end }}
 
         if [ ${healthCode} -ne ${EMPTY_BODY} ]; then
