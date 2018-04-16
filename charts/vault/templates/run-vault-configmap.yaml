@@ -5,7 +5,7 @@ metadata:
   name: {{ template "vault.name" . }}-startscript
   labels:
     app: {{ template "vault.name" . }}-startscript
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 }}
     heritage: {{ .Release.Service }}
     release: {{ .Release.Name }}
 data:
