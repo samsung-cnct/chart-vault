@@ -3,7 +3,7 @@ Create helm partial for Vault container
 */}}
 {{- define "containerVault" }}
 - name: run-vault
-  image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+  image: "{{.Values.vault.image}}"
   securityContext:
     capabilities:
       add:

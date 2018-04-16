@@ -3,7 +3,7 @@ Create helm partial for Vault initialization
 */}}
 {{- define "containerInitVault" }}
 - name: init-vault
-  image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+  image: "{{.Values.vault.image}}"
   imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
   volumeMounts:
   - name: config

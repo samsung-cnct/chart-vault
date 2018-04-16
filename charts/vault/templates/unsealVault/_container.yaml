@@ -3,7 +3,7 @@ Create helm partial for Vault initialization
 */}}
 {{- define "containerUnsealVault" }}
 - name: unseal-vault
-  image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+  image: "{{.Values.vault.image}}"
   imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
   {{- if .Values.vault.tls.enabled }}
   volumeMounts:

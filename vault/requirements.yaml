@@ -1,5 +1,0 @@
-appr:
-- name: quay.io/samsung_cnct/vault-etcd
-  repository: appr://
-  version: ':stable'
-  condition: etcdSetupEnabled

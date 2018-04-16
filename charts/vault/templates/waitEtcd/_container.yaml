@@ -3,7 +3,7 @@ Create helm partial for Vault initialization
 */}}
 {{- define "containerWaitEtcd" }}
 - name: wait-etcd
-  image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+  image: "{{.Values.vault.image}}"
   imagePullPolicy: {{ .Values.vault.tls.imagePullPolicy }}
   {{- if .Values.vault.etcdBackend.tls.enabled }}
   volumeMounts:

@@ -1,0 +1,5 @@
+dependencies:
+- name: vault-etcd
+  version: "0.0.7-prod.6+e0e090463683f08ba3813704330308fe1aae0f01"
+  repository: "https://charts.migrations.cnct.io"
+  condition: etcdSetupEnabled

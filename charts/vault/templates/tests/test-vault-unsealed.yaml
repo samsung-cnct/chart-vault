@@ -12,7 +12,7 @@ metadata:
 spec:
   containers:
   - name: unseal-test
-    image: "{{.Values.vault.image}}:{{.Values.vault.imageTag}}"
+    image: "{{.Values.vault.image}}"
     imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
     {{- if .Values.vault.tls.enabled }}
     volumeMounts:
