@@ -1,0 +1,16 @@
+---
+name: vault
+version: 0.9.3
+description: Hashicorp Vault server
+keywords:
+- Vault
+- Hashicorp
+- Secret
+home: https://github.com/samsung-cnct/chart-vault
+sources:
+- https://www.vaultproject.io
+maintainers:
+- name: Samsung CNCT
+  email: samsung.cloudnative@gmail.com
+icon: null
+engine: gotpl
