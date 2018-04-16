@@ -24,9 +24,6 @@ ENV K8S_VER=v1.9.0
 # to provide HashiCorp-built versions of basic utilities like dumb-init and gosu.
 ENV DOCKER_BASE_VERSION=0.0.4
 
-# test battery script
-COPY test/config.json /vault/config/local.json
-COPY test/test-run-vault.sh /usr/local/bin/test-run-vault.sh
 
 # Create a vault user and group first so the IDs get set the same way,
 # even as the rest of this may change over time.
