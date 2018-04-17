@@ -12,7 +12,7 @@ rootfs:
 configs:
   - chart: vault
     timeout: 600
-    retries: 2
+    retries: 1
     release: vault
     test: 
       values:
