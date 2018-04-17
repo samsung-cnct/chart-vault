@@ -11,11 +11,13 @@ It has been:
 {{- if and .Values.vault.setup.unseal (not .Values.vault.pgpKeys ) }}
 * Unsealed
 {{- if not .Values.vault.rootPgpKey}}
+{{- if .Values.vault.backends }}
 {{- if .Values.vault.backends.auth }}
 * Set up with auth backends
 {{- end }}
 {{- if .Values.vault.backends.secrets }}
 * Set up with secrets backends
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
