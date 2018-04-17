@@ -1,0 +1,77 @@
+{{- if and .Values.vault.setup.init .Values.vault.setup.unseal }}
+apiVersion: v1
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-unsealed-test"
+  labels:
+    app: smoke-test
+    release: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+  - name: unseal-test
+    image: "{{.Values.vault.image}}"
+    imagePullPolicy: {{ .Values.vault.imagePullPolicy }}
+    {{- if .Values.vault.tls.enabled }}
+    volumeMounts:
+    - name: vault-tls-data
+      mountPath: {{ .Values.vault.tls.secret.mountPath }}
+      readOnly: true
+    {{- end }}
+    env:
+    - name: VAULT_ADDR
+      value: {{ if .Values.vault.tls.enabled }}https://{{ else }}http://{{ end }}{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}
+    - name: SCRIPT
+      value: &testVault |-
+        #!/bin/sh
+
+        printenv
+
+        INVALID=0
+        INITIALIZED_UNSEALED_ACTIVE=200
+
+        # Get initial health code
+        healthCode=${INVALID}
+
+        echo "Getting health code"
+        until [ ${healthCode} -eq ${INITIALIZED_UNSEALED_ACTIVE} ]; do
+          {{ if .Values.vault.tls.enabled }}
+          healthCode=$(curl --connect-timeout 1 \
+            -o /dev/null \
+            -w %{http_code} \
+            --cert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.certFile }} \
+            --cert-type PEM \
+            --key {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.keyFile }} \
+            --key-type PEM \
+            --cacert {{ .Values.vault.tls.secret.mountPath }}/{{ .Values.vault.tls.secret.caFile }} \
+            --location \
+              ${VAULT_ADDR}/v1/sys/health)
+          {{- else }}
+          healthCode=$(curl --connect-timeout 1 \
+            -o /dev/null \
+            -w %{http_code} \
+            --location \
+              ${VAULT_ADDR}/v1/sys/health)
+          {{- end }}
+
+          if [ ${healthCode} -ne ${INITIALIZED_UNSEALED_ACTIVE} ]; then
+            echo "Got ${healthCode} - Will retry."
+          fi
+
+          sleep 3;
+        done
+
+        exit 0;
+
+    command: [ "/bin/sh" ]
+    args: ["-c", *testVault]
+  restartPolicy: Never
+  volumes:
+  {{- if .Values.vault.tls.enabled }}
+  - name: vault-tls-data
+    secret:
+      secretName: {{ .Values.vault.tls.secret.name }}
+  {{- end }}
+{{- end }}

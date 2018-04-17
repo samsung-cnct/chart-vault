@@ -54,8 +54,7 @@ To learn more about the release, try:
 
 | Parameter | Description | Default|
 | ---| --- | --- |
-| vault.image | Vault docker image to use. | "quay.io/samsung_cnct/vault" |    
-| vault.imageTag | Version of vault image. | "0.8.3" |
+| vault.image | Vault docker image to use. | "quay.io/samsung_cnct/vault:prod" |    
 | vault.imagePullPolicy | Pull policy for the docker image. | "Always" |
 | vault.nodePort | Override service node port with a preset value. | N/A |
 | vault.listenerPort | Vault client listener port. | 8200 |

@@ -1,0 +1,40 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+Your Vault server located at {{ if .Values.vault.tls.enabled }}https{{ else }}http{{ end }}://{{ template "vault.access" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }}.
+It has been:
+
+{{- if .Values.vault.setup.init }}
+* Initialized
+{{- end }}
+{{- if and .Values.vault.setup.unseal (not .Values.vault.pgpKeys ) }}
+* Unsealed
+{{- if not .Values.vault.rootPgpKey}}
+{{- if .Values.vault.backends }}
+{{- if .Values.vault.backends.auth }}
+* Set up with auth backends
+{{- end }}
+{{- if .Values.vault.backends.secrets }}
+* Set up with secrets backends
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+{{- if .Values.vault.setup.init }}
+Unseal keys and root token are in the '{{ .Values.vault.setup.masterSecret | default (include "vault.name" .) }}'' cluster secret.
+{{- end }}
+
+{{- if .Values.vault.pgpKeys }}
+Unseal keys are encrypted with public keys from vault.pgpKeys value array (order preserved)
+{{- end }}
+
+{{- if .Values.vault.rootPgpKey }}
+Root token is encrypted with public key from vault.rootPgpKey value
+{{- end }}
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }}
+  $ helm get {{ .Release.Name }}

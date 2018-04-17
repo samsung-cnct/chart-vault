@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "vault.access" . }}
+  labels:
+    app: {{ template "vault.name" . }}
+    chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 }}
+    heritage: {{ .Release.Service }}
+    release: {{ .Release.Name }}
+spec:
+  ports:
+    - name: access
+      protocol: TCP
+      {{- if .Values.vault.tls.enabled }}
+      port: 443
+      targetPort: {{ .Values.vault.listenerPort }}
+      {{- else }}
+      port: 80
+      targetPort: {{ .Values.vault.listenerPort }}
+      {{- end }}
+  selector:
+    app: {{ template "vault.name" . }}

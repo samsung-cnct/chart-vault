@@ -1,0 +1,237 @@
+type: chart
+envValues:
+  - envVar: KUBECTL_VERSION
+    value: v1.9.2
+rootfs:
+  - image: samsung_cnct/vault
+    buildArgs: 
+      KUBECTL_VERSION: "v1.9.2"
+    context: vault
+    chart: vault
+    value: vault.image
+configs:
+  - chart: vault
+    timeout: 600
+    retries: 1
+    release: vault
+    test: 
+      values:
+        - key: vault.listenerPort
+          value: 8200
+        - key: vault.clusterListenerPort
+          value: 8201
+        - key: vault.backend
+          value: "etcd"
+        - key: vault.enableDebug
+          value: true
+        - key: vault.replicas
+          value: 3
+        - key: vault.secretShares
+          value: 5
+        - key: vault.unsealShares
+          value: 3
+        - key: vault.initBackoff
+          value: 10
+        - key: vault.initDeadline
+          value: 600
+        - key: vault.cpu
+          value: "500m"
+        - key: vault.memory
+          value: "200Mi"
+        - key: vault.etcdSetupEnabled
+          value: true
+        - key: vault.etcdBackend.address
+          value: etcd-vault
+        - key: vault.etcdBackend.port
+          value: 2379
+        - key: vault.etcdBackend.etcdApi
+          value: "v3"
+        - key: vault.etcdBackend.sync
+          value: "false"
+        - key: vault.etcdBackend.username
+          value: ""
+        - key: vault.etcdBackend.password
+          value: ""
+        - key: vault.etcdBackend.disableClustering
+          value: "false"
+        - key: vault.etcdBackend.tls.enabled
+          value: true
+        - key: vault.etcdBackend.tls.secret.mountPath
+          value: /etc/etcd/tls
+        - key: vault.etcdBackend.tls.secret.name
+          value: etcd-client-tls
+        - key: vault.etcdBackend.tls.secret.certFile
+          value: etcd-client.pem
+        - key: vault.etcdBackend.tls.secret.keyFile
+          value: etcd-client-key.pem
+        - key: vault.etcdBackend.tls.secret.caFile
+          value: ca.pem
+        - key: vault.tls.enabled
+          value: true
+        - key: vault.tls.secret.name
+          value: vault-client-tls
+        - key: vault.tls.secret.mountPath
+          value: /etc/vault/tls
+        - key: vault.tls.secret.certFile
+          value: vault-client.pem
+        - key: vault.tls.secret.keyFile
+          value: vault-client-key.pem
+        - key: vault.tls.secret.caFile
+          value: ca.pem
+        - key: vault.setup.init
+          value: true
+        - key: vault.setup.unseal
+          value: true
+        - key: vault.setup.masterSecret
+          value: vault-test-unseal
+        - key: vault.backends.auth.approle.enable.type
+          value: approle
+        - key: vault.backends.auth.approle.enable.description
+          value: AppRole Auth backend
+        - key: vault.backends.auth.approle.enable.config.plugin_name
+          value: ""
+        - key: vault.backends.auth.approle.enable.config.local
+          value: false
+        - key: vault.backends.auth.kubernetes.enable.type
+          value: kubernetes
+        - key: vault.backends.auth.kubernetes.enable.description
+          value: Kubernetes Auth backend
+        - key: vault.backends.auth.kubernetes.enable.config.plugin_name
+          value: ""
+        - key: vault.backends.auth.kubernetes.enable.config.local
+          value: false
+        - key: vault.backends.auth.kubernetes.configure.kubernetes_host
+          value: https://kubernetes.default.svc.cluster.local
+        - key: vault.backends.secrets.kv.type
+          value: kv
+        - key: vault.backends.secrets.kv.description
+          value: Key-Value secret backend
+        - key: vault.backends.secrets.kv.config.plugin_name
+          value: ""
+        - key: vault.backends.secrets.kv.config.default_lease_ttl
+          value: 0
+        - key: vault.backends.secrets.kv.config.max_lease_ttl
+          value: 0
+        - key: vault.backends.secrets.kv.config.force_no_cache
+          value: false
+        - key: vault.backends.secrets.kv.config.local
+          value: false
+        - key: vault.backends.secrets.kv.config.seal_wrap
+          value: false
+        - key: vault.backends.secrets.transit.type
+          value: transit
+        - key: vault.backends.secrets.transit.description
+          value: Transit encryption secret backend
+        - key: vault.backends.secrets.transit.config.plugin_name
+          value: ""
+        - key: vault.backends.secrets.transit.config.default_lease_ttl
+          value: 0
+        - key: vault.backends.secrets.transit.config.max_lease_ttl
+          value: 0
+        - key: vault.backends.secrets.transit.config.force_no_cache
+          value: false
+        - key: vault.backends.secrets.transit.config.local
+          value: false
+        - key: vault.backends.secrets.transit.config.seal_wrap
+          value: false
+        - key: vault-etcd.service.name
+          value: etcd-vault
+        - key: vault-etcd.service.tls.enable
+          value: true
+        - key: vault-etcd.service.tls.serverSecret.name
+          value: etcd-server-tls
+        - key: vault-etcd.service.tls.serverSecret.path
+          value: "/etcd/certs/server"
+        - key: vault-etcd.service.tls.peerSecret.name
+          value: etcd-peer-tls
+        - key: vault-etcd.service.tls.peerSecret.path
+          value: "/etcd/certs/peer"
+        - key: vault-etcd.service.tls.clientSecret.name
+          value: etcd-client-tls
+        - key: vault-etcd.service.tls.clientSecret.path
+          value: "/etcd/certs/client"
+    stage: 
+      values:
+        - key: vault.listenerPort
+          value: 8200
+        - key: vault.clusterListenerPort
+          value: 8201
+        - key: vault.backend
+          value: "etcd"
+        - key: vault.enableDebug
+          value: true
+        - key: vault.replicas
+          value: 3
+        - key: vault.secretShares
+          value: 5
+        - key: vault.unsealShares
+          value: 3
+        - key: vault.initBackoff
+          value: 10
+        - key: vault.initDeadline
+          value: 600
+        - key: vault.cpu
+          value: "500m"
+        - key: vault.memory
+          value: "200Mi"
+        - key: vault.etcdSetupEnabled
+          value: false
+        - key: vault.etcdBackend.address
+          value: etcd-vault
+        - key: vault.etcdBackend.port
+          value: 2379
+        - key: vault.etcdBackend.etcdApi
+          value: "v3"
+        - key: vault.etcdBackend.sync
+          value: "false"
+        - key: vault.etcdBackend.username
+          value: ""
+        - key: vault.etcdBackend.password
+          value: ""
+        - key: vault.etcdBackend.disableClustering
+          value: "false"
+        - key: vault.etcdBackend.tls.enabled
+          value: true
+        - key: vault.etcdBackend.tls.secret.mountPath
+          value: /etc/etcd/tls
+        - key: vault.etcdBackend.tls.secret.name
+          value: etcd-client-tls
+        - key: vault.etcdBackend.tls.secret.certFile
+          value: etcd-client.pem
+        - key: vault.etcdBackend.tls.secret.keyFile
+          value: etcd-client-key.pem
+        - key: vault.etcdBackend.tls.secret.caFile
+          value: ca.pem
+        - key: vault.tls.enabled
+          value: true
+        - key: vault.tls.secret.name
+          value: vault-client-tls
+        - key: vault.tls.secret.mountPath
+          value: /etc/vault/tls
+        - key: vault.tls.secret.certFile
+          value: vault-client.pem
+        - key: vault.tls.secret.keyFile
+          value: vault-client-key.pem
+        - key: vault.tls.secret.caFile
+          value: ca.pem
+        - key: vault.setup.init
+          value: true
+        - key: vault.setup.unseal
+          value: true
+        - key: vault.setup.masterSecret
+          value: vault-test-unseal  
+test:
+  beforeScript:
+    script: scripts/beforeTest.sh
+    shell: /usr/local/bin/bash
+  afterScript:
+    script: scripts/afterTest.sh
+    shell: /usr/local/bin/bash
+stage:
+  beforeScript:
+    script: scripts/beforeStage.sh
+    shell: /usr/local/bin/bash
+prod:  
+  doDeploy: none
+
+ 
