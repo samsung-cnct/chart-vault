@@ -88,7 +88,7 @@ Create helm partial for Vault initialization
       {{- range $keyNum, $k := until (int $.Values.vault.unsealShares) }}
 
       echo "Unsealing pod {{ template "vault.name" $ }}-{{ $podNum }} of {{ $.Values.vault.replicas }} with key {{ $keyNum }} of {{ $.Values.vault.unsealShares }}"
-      currentUnsealShard=$(kubectl get secret {{ $.Values.vault.setup.masterSecret | default (include "vault.name" $ ) }} -o json --namespace  {{ $.Release.Namespace }} | jq --raw-output '.data."unseal.json"' | base64 --decode | jq -r ".keys[{{ $keyNum }}]")
+      currentUnsealShard=$(kubectl get secret {{ $.Values.vault.setup.masterSecret | default (include "vault.name" $ ) }} -o json --namespace  {{ $.Release.Namespace }} | jq --raw-output '.data."unseal.json"' | base64 -d | jq -r ".keys[{{ $keyNum }}]")
 
       # first wait for the pod to be responsive
       echo "Making sure pod {{ template "vault.name" $ }}-{{ $podNum }} is up and running..."
