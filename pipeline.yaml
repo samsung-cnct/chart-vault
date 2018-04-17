@@ -4,6 +4,8 @@ envValues:
     value: v1.9.2
 rootfs:
   - image: samsung_cnct/vault
+    buildArgs: 
+      KUBECTL_VERSION: "v1.9.2"
     context: vault
     chart: vault
     value: vault.image
