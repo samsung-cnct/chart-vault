@@ -5,7 +5,8 @@ envValues:
 rootfs:
   - image: samsung_cnct/vault
     buildArgs: 
-      KUBECTL_VERSION: "v1.9.2"
+      - arg: KUBECTL_VERSION
+        value: "v1.9.2"
     context: vault
     chart: vault
     value: vault.image
@@ -150,87 +151,12 @@ configs:
           value: etcd-client-tls
         - key: vault-etcd.service.tls.clientSecret.path
           value: "/etcd/certs/client"
-    stage: 
-      values:
-        - key: vault.listenerPort
-          value: 8200
-        - key: vault.clusterListenerPort
-          value: 8201
-        - key: vault.backend
-          value: "etcd"
-        - key: vault.enableDebug
-          value: true
-        - key: vault.replicas
-          value: 3
-        - key: vault.secretShares
-          value: 5
-        - key: vault.unsealShares
-          value: 3
-        - key: vault.initBackoff
-          value: 10
-        - key: vault.initDeadline
-          value: 600
-        - key: vault.cpu
-          value: "500m"
-        - key: vault.memory
-          value: "200Mi"
-        - key: vault.etcdSetupEnabled
-          value: false
-        - key: vault.etcdBackend.address
-          value: etcd-vault
-        - key: vault.etcdBackend.port
-          value: 2379
-        - key: vault.etcdBackend.etcdApi
-          value: "v3"
-        - key: vault.etcdBackend.sync
-          value: "false"
-        - key: vault.etcdBackend.username
-          value: ""
-        - key: vault.etcdBackend.password
-          value: ""
-        - key: vault.etcdBackend.disableClustering
-          value: "false"
-        - key: vault.etcdBackend.tls.enabled
-          value: true
-        - key: vault.etcdBackend.tls.secret.mountPath
-          value: /etc/etcd/tls
-        - key: vault.etcdBackend.tls.secret.name
-          value: etcd-client-tls
-        - key: vault.etcdBackend.tls.secret.certFile
-          value: etcd-client.pem
-        - key: vault.etcdBackend.tls.secret.keyFile
-          value: etcd-client-key.pem
-        - key: vault.etcdBackend.tls.secret.caFile
-          value: ca.pem
-        - key: vault.tls.enabled
-          value: true
-        - key: vault.tls.secret.name
-          value: vault-client-tls
-        - key: vault.tls.secret.mountPath
-          value: /etc/vault/tls
-        - key: vault.tls.secret.certFile
-          value: vault-client.pem
-        - key: vault.tls.secret.keyFile
-          value: vault-client-key.pem
-        - key: vault.tls.secret.caFile
-          value: ca.pem
-        - key: vault.setup.init
-          value: true
-        - key: vault.setup.unseal
-          value: true
-        - key: vault.setup.masterSecret
-          value: vault-test-unseal  
 test:
   beforeScript:
     script: scripts/beforeTest.sh
     shell: /usr/local/bin/bash
-  afterScript:
-    script: scripts/afterTest.sh
-    shell: /usr/local/bin/bash
 stage:
-  beforeScript:
-    script: scripts/beforeStage.sh
-    shell: /usr/local/bin/bash
+  deploy: false
 prod:  
   doDeploy: none
 
