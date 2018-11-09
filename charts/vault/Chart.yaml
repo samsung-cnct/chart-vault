@@ -1,6 +1,5 @@
----
 name: vault
-version: 0.9.3
+version: 0.9.4
 description: Hashicorp Vault server
 keywords:
 - Vault
@@ -12,5 +11,5 @@ sources:
 maintainers:
 - name: Samsung CNCT
   email: samsung.cloudnative@gmail.com
-icon: null
+icon:
 engine: gotpl
