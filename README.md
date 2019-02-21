@@ -1,4 +1,4 @@
-# A Helm Chart for Hashicorp Vault
+# [Deprecated] A Helm Chart for Hashicorp Vault
 
 ## Summary
 This chart installs [Hashicorp Vault](https://www.vaultproject.io) backed by either in-memory storage or with etcd, with HA. Vault is brought up and, optionally, initialized, unsealed and setup with several secrets and auth backends.
